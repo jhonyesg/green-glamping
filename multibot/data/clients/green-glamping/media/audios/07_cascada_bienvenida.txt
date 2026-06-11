@@ -1,0 +1,71 @@
+=== BLOQUE 07: CASCADA DE BIENVENIDA (3 MENSAJES + 1 AUDIO) ===
+ID: cascada_bienvenida
+USO: Después del saludo inicial, el bot envía esta cascada en orden estricto.
+      Mensaje 1 → texto (con emojis)
+      Mensaje 2 → imagen portafolio_glamping
+      Mensaje 3 → imagen portafolio_parapente
+      Mensaje 4 → audio (01a / 01b / 01c según hora + variable)
+DELAY ENTRE MENSAJES: 2-3 segundos (configurable en n8n)
+
+OBJETIVO: Mostrar el catálogo visual de inmediato para que el cliente se ubique,
+          y cerrar invitando a elegir.
+
+─────────────────────────────────────────────────────────────
+MENSAJE 1 (TEXTO — se genera con plantilla, NO con LLM)
+─────────────────────────────────────────────────────────────
+"¡Hola! 👋😊
+
+Bienvenido/a a *Green Glamping Chipaque* & *Parapente Volando con Tatan* 🌿🪂✨
+
+Gracias por contactarnos.
+
+Aquí podrás vivir una experiencia única que combina naturaleza, descanso y adrenalina, con nuestros glamping y vuelos en parapente sobre paisajes espectaculares 🌄💚
+
+Te comparto nuestro portafolio para que vayas viendo lo que tenemos."
+
+─────────────────────────────────────────────────────────────
+MENSAJE 2 (IMAGEN — asset fijo)
+─────────────────────────────────────────────────────────────
+📎 portafolio_glamping.jpg
+DESCRIPCIÓN DEL ASSET: Portafolio visual de los glamping Montaña y Cristal con fotos, capacidades y precios.
+
+─────────────────────────────────────────────────────────────
+MENSAJE 3 (IMAGEN — asset fijo)
+─────────────────────────────────────────────────────────────
+📎 portafolio_parapente.jpg
+DESCRIPCIÓN DEL ASSET: Portafolio visual de vuelos en parapente, restricciones, recomendaciones y proceso.
+
+─────────────────────────────────────────────────────────────
+MENSAJE 4 (AUDIO — rota por hora + variante)
+─────────────────────────────────────────────────────────────
+Archivo: audios/01a_bienvenida_manana.ogg  (06:00–12:00)
+Archivo: audios/01b_bienvenida_tarde.ogg   (12:00–18:00)
+Archivo: audios/01c_bienvenida_noche.ogg   (18:00–06:00)
+Variantes opcionales si la metadata existe:
+  audios/01d_bienvenida_recurrente.ogg   (cliente con historial)
+  audios/01e_bienvenida_anuncio.ogg      (vino de Facebook/IG ads)
+  audios/01f_bienvenida_referido.ogg     (referido por otro cliente)
+IMPORTANTE: ninguno dice "soy bot". Todos hablan en primera persona del equipo.
+
+─────────────────────────────────────────────────────────────
+MENSAJE 5 (TEXTO — cierra la cascada, NO con LLM)
+─────────────────────────────────────────────────────────────
+"Será un gusto asesorarte y ayudarte a reservar la experiencia perfecta.
+
+Cuéntanos, ¿qué plan te gustaría conocer? 💬✨"
+
+─────────────────────────────────────────────────────────────
+REGLAS DE LA CASCADA
+─────────────────────────────────────────────────────────────
+- NO intercalar respuestas del cliente entre los 5 mensajes. Si el cliente escribe durante la cascada → esperar a terminarla y luego responder.
+- Si el cliente saluda DOS veces seguidas en menos de 1 minuto → NO repetir cascada, solo decir: "¡Ya te cuento! Dame un segundo que te comparto el portafolio 🙌" (texto fijo).
+- Si el cliente ya recibió la cascada hace <24h → NO repetir. Solo enviar audio de saludo + "¿En qué te ayudo?".
+- El orden es estricto: texto → portafolio_glamping → portafolio_parapente → audio → texto cierre.
+
+─────────────────────────────────────────────────────────────
+COSTO TOKENS
+─────────────────────────────────────────────────────────────
+- Mensaje 1, 5 → texto fijo (0 tokens LLM)
+- Mensaje 2, 3 → imagen (0 tokens, asset pre-hecho)
+- Mensaje 4 → audio pre-grabado (0 tokens TTS)
+- TOTAL cascada de bienvenida: 0 tokens de LLM / 0 tokens de TTS

@@ -1,0 +1,8 @@
+=== AUDIO 01a: BIENVENIDA / SALUDO MATUTINO ===
+ID: audio_bienvenida_manana
+USO: Saludo entre 6:00 y 12:00. Rota con 01b y 01c.
+DURACIÓN APROX: 8 segundos
+
+TEXTO A GRABAR / TTS:
+"¡Buenos días! Bienvenido a Green Glamping Chipaque y Parapente Volando con Tatan. Cuéntanos, ¿qué plan te gustaría conocer hoy?"
+IMPORTANTE: Decirlo en primera persona. Nunca decir "soy bot".

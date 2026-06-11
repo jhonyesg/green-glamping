@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Tenant creado{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Nuevo tenant</h1></div>
+
+{% if success %}
+<div class="alert alert-success">
+  <strong>✓ Tenant <code>{{ slug }}</code> creado exitosamente.</strong>
+</div>
+
+{% if client_user_created %}
+<div class="alert alert-success">
+  ✓ Usuario del cliente creado: <strong>{{ client_username }}</strong> —
+  ya puede iniciar sesión en el panel con acceso limitado a su tenant.
+</div>
+{% elif client_user_error %}
+<div class="alert alert-error">
+  El tenant se creó, pero falló la creación del usuario: {{ client_user_error }}.
+  Puedes crearlo manualmente en <a href="/admin/users">Usuarios</a>.
+</div>
+{% endif %}
+
+<div class="card" style="max-width:600px">
+  <h3>Próximos pasos</h3>
+  <ol style="padding-left:1.5rem;line-height:2">
+    <li>Configura el webhook de Telegram apuntando a:
+      <br><code>/webhook/telegram/{{ slug }}</code></li>
+    <li><a href="/admin/kb?tenant={{ slug }}">Carga la base de conocimiento</a> del tenant</li>
+    <li><a href="/admin/conversations?tenant={{ slug }}">Monitorea las conversaciones</a></li>
+  </ol>
+  {% if webhook_url %}
+  <div class="alert alert-info" style="margin-top:1rem">
+    <strong>Webhook URL:</strong><br>
+    <code>https://&lt;tu-dominio&gt;{{ webhook_url }}</code>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="alert alert-error">
+  <strong>Error al crear el tenant.</strong> Revisa los logs para más detalles.
+</div>
+<div class="card" style="max-width:700px">
+  <h3>Detalles del error</h3>
+  <pre style="font-size:.8rem;overflow-x:auto;background:#f5f5f5;padding:1rem;border-radius:8px">{{ output }}</pre>
+  <div class="form-actions">
+    <a href="/admin/wizard" class="btn btn-secondary">← Intentar de nuevo</a>
+  </div>
+</div>
+{% endif %}
+
+<div style="margin-top:1rem">
+  <a href="/admin" class="btn btn-primary">Ir al dashboard</a>
+</div>
+{% endblock %}

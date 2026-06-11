@@ -1,0 +1,8 @@
+=== AUDIO 01b: BIENVENIDA / SALUDO TARDE ===
+ID: audio_bienvenida_tarde
+USO: Saludo entre 12:00 y 18:00. Rota con 01a y 01c.
+DURACIÓN APROX: 8 segundos
+
+TEXTO A GRABAR / TTS:
+"¡Hola! Qué gusto saludarte. Bienvenido a Green Glamping Chipaque y Parapente Volando con Tatan. ¿Qué te gustaría conocer de nosotros?"
+IMPORTANTE: Decirlo en primera persona. Nunca decir "soy bot".

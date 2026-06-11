@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Configuración TTS — {{ tenant }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Configuración de voz (TTS)</h1>
+  <p class="subtitle">Tenant: <strong>{{ tenant }}</strong></p>
+</div>
+
+<div class="card" style="max-width:700px">
+  <h3>Providers LLM con capacidad TTS</h3>
+  {% if not providers %}
+  <div class="alert alert-info">
+    No hay providers configurados para este tenant.
+    Primero configura un provider LLM con soporte TTS en el panel de configuración.
+  </div>
+  {% else %}
+  {% for p in providers %}
+  <form method="post" action="/admin/tts/update?tenant={{ tenant }}" style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--color-border)">
+    <input type="hidden" name="provider_id" value="{{ p.id }}">
+    <h4>{{ p.provider_name }} — <code>{{ p.model }}</code>
+      <span class="badge {{ 'badge-green' if p.is_active else 'badge-gray' }}" style="margin-left:.5rem">
+        {{ 'activo' if p.is_active else 'inactivo' }}
+      </span>
+    </h4>
+
+    <div class="form-group" style="margin-top:.75rem">
+      <label>
+        <input type="checkbox" name="enable_tts"
+          {% if p.capabilities and p.capabilities.get('tts') %}checked{% endif %}>
+        Habilitar TTS en este provider
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label>IDs de voz (separados por coma)</label>
+      <input class="form-control" name="voice_ids"
+             placeholder="female-shaxi-1, warm_1, warm_2"
+             value="{{ (p.capabilities or {}).get('voice_ids', []) | join(', ') }}">
+      <p class="form-hint">Las variantes se rotan automáticamente por round-robin</p>
+    </div>
+
+    <button class="btn btn-primary" type="submit">Guardar</button>
+  </form>
+  {% endfor %}
+  {% endif %}
+
+  <div class="alert alert-info" style="margin-top:1rem">
+    <strong>Cómo funciona:</strong> Cuando el pipeline genera una respuesta, consulta la caché de TTS.
+    Si el audio no existe, lo genera con el provider configurado y lo almacena en disco.
+    Después de {{ 5 }} usos, el audio se marca como <em>pregenerated</em> para servirse directamente.
+  </div>
+</div>
+{% endblock %}

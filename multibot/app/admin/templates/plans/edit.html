@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Editar servicio — {{ plan.nombre }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>✎ Editar servicio</h1>
+  <p class="subtitle"><a href="/admin/plans?tenant={{ tenant }}">← volver a servicios</a></p>
+</div>
+
+{% if error %}
+<div class="alert alert-error">⚠ {{ error }}</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem">
+  <div class="card">
+    <h3>Datos del servicio</h3>
+    <form method="post" action="/admin/plans/{{ plan.id }}">
+      <input type="hidden" name="tenant" value="{{ tenant }}">
+      <div class="form-group">
+        <label>Slug (único, sin espacios)</label>
+        <input class="form-control" name="slug" required pattern="[a-z0-9_-]+" value="{{ plan.slug }}">
+      </div>
+      <div class="form-group">
+        <label>Nombre</label>
+        <input class="form-control" name="nombre" required value="{{ plan.nombre }}">
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea class="form-control" name="descripcion" rows="2">{{ plan.descripcion or '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Precio desde (COP)</label>
+        <input class="form-control" name="precio_cop" type="number" min="0" step="0.01" value="{{ plan.precio_cop }}">
+        <p class="form-hint">
+          Precio de referencia. La plataforma lo muestra pero no procesa
+          pagos: el cierre comercial lo hacen el dueño y el cliente
+          por el canal que prefieran.
+        </p>
+      </div>
+      <div class="form-group">
+        <label>Qué incluye (uno por línea)</label>
+        <textarea class="form-control" name="incluye" rows="4">{{ plan.incluye | join('\n') }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Orden de visualización</label>
+        <input class="form-control" name="display_order" type="number" value="{{ plan.display_order }}" style="max-width:120px">
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" name="is_active" value="true" {% if plan.is_active %}checked{% endif %}>
+          Activo (visible en respuestas del bot)
+        </label>
+      </div>
+      <button class="btn btn-primary">Guardar</button>
+      <a class="btn btn-secondary" href="/admin/plans?tenant={{ tenant }}">Cancelar</a>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>🖼 Imagen de portada</h3>
+    <p class="form-hint" style="font-size:.82rem;margin-bottom:.6rem">
+      Elegí una imagen de la biblioteca de media del tenant.
+      Si necesitás subir una nueva, andá a
+      <a href="/admin/media?tenant={{ tenant }}">Media</a> primero.
+    </p>
+    <form method="post" action="/admin/plans/{{ plan.id }}">
+      <input type="hidden" name="tenant" value="{{ tenant }}">
+      <input type="hidden" name="slug" value="{{ plan.slug }}">
+      <input type="hidden" name="nombre" value="{{ plan.nombre }}">
+      <input type="hidden" name="descripcion" value="{{ plan.descripcion or '' }}">
+      <input type="hidden" name="incluye" value="{{ plan.incluye | join('\n') }}">
+      <input type="hidden" name="display_order" value="{{ plan.display_order }}">
+      <input type="hidden" name="is_active" value="{{ 'true' if plan.is_active else 'false' }}">
+
+      <div class="form-group">
+        {% if plan.imagen_url %}
+          <img class="plan-thumb" style="width:100%;max-width:240px;height:auto;display:block;margin-bottom:.5rem"
+               src="{{ plan.imagen_url }}" alt="portada actual">
+        {% endif %}
+        <select class="form-control" name="imagen_id">
+          <option value="0">— Sin imagen —</option>
+          {% for m in media_images %}
+          <option value="{{ m.id }}" {% if m.id == plan.imagen_id %}selected{% endif %}>
+            {{ m.key }} ({{ m.mime_type }})
+          </option>
+          {% endfor %}
+        </select>
+        {% if not media_images %}
+          <p class="form-hint" style="color:#c92a2a">
+            No hay imágenes en la biblioteca todavía. Subí una en
+            <a href="/admin/media?tenant={{ tenant }}">Media</a>.
+          </p>
+        {% endif %}
+      </div>
+      <button class="btn btn-primary" type="submit">Guardar imagen</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

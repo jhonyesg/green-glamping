@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Reservas — {{ tenant }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Reservas</h1>
+  <p class="subtitle">Tenant: <strong>{{ tenant }}</strong> — {{ total }} reservas</p>
+</div>
+
+<form method="get" action="/admin/reservations" style="display:flex;gap:.5rem;margin-bottom:1rem">
+  <input type="hidden" name="tenant" value="{{ tenant }}">
+  <select class="form-control" name="state" style="max-width:200px" onchange="this.form.submit()">
+    <option value="">Todos los estados</option>
+    <option value="tentative" {% if state == 'tentative' %}selected{% endif %}>Tentativa</option>
+    <option value="confirmed" {% if state == 'confirmed' %}selected{% endif %}>Confirmada</option>
+    <option value="cancelled" {% if state == 'cancelled' %}selected{% endif %}>Cancelada</option>
+  </select>
+</form>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Huésped</th>
+        <th>Combo</th>
+        <th>Check-in</th>
+        <th>Check-out</th>
+        <th>Personas</th>
+        <th>Precio</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reservations %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.guest_name or '—' }}</td>
+        <td>{{ r.combo or '—' }}</td>
+        <td>{{ r.check_in or '—' }}</td>
+        <td>{{ r.check_out or '—' }}</td>
+        <td>{{ r.guests_count }}</td>
+        <td>{{ '$%,.0f' | format(r.total_price) if r.total_price else '—' }}</td>
+        <td>
+          <span class="badge
+            {{ 'badge-orange' if r.state == 'tentative' else
+               'badge-green' if r.state == 'confirmed' else 'badge-red' }}">
+            {{ r.state }}
+          </span>
+        </td>
+        <td style="display:flex;gap:.3rem">
+          {% if r.state == 'tentative' %}
+          <form method="post" action="/admin/reservations/{{ r.id }}/confirm?tenant={{ tenant }}">
+            <input type="hidden" name="confirmed_by" value="admin">
+            <button class="btn btn-primary" style="padding:.3rem .6rem;font-size:.8rem">✓ Confirmar</button>
+          </form>
+          {% endif %}
+          {% if r.state != 'cancelled' %}
+          <form method="post" action="/admin/reservations/{{ r.id }}/cancel?tenant={{ tenant }}"
+                onsubmit="return confirm('¿Cancelar reserva #{{ r.id }}?')">
+            <input type="hidden" name="reason" value="Cancelado por admin">
+            <button class="btn" style="background:#ffebee;color:#c62828;padding:.3rem .6rem;font-size:.8rem">✕</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" style="text-align:center;color:var(--color-text-muted)">Sin reservas</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pages > 1 %}
+<div class="pagination">
+  {% if page > 1 %}<a href="?tenant={{ tenant }}&state={{ state }}&page={{ page - 1 }}">‹</a>{% endif %}
+  <span class="current">{{ page }} / {{ pages }}</span>
+  {% if page < pages %}<a href="?tenant={{ tenant }}&state={{ state }}&page={{ page + 1 }}">›</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

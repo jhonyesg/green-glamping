@@ -1,0 +1,366 @@
+{
+  "version": "2.0",
+  "description": "Base de conocimiento completa del bot Green Glamping. Cada intent tiene: descripción, ejemplos (few-shot), keywords para clasificador regex, respuesta pre-made (0 LLM), y handoff si requiere humano. Fuente: chatbot/reglas y horarios/preguntas IA.pdf + chatbot/intents.json v1 + chatbot/flujo_venta.html",
+  "metadata": {
+    "fuente_principal": "reglas y horarios/preguntas IA.pdf (entregado por cliente 2026-06-09)",
+    "intents_cubiertos": 28,
+    "objecciones_cubiertas": 6,
+    "handoff_triggers": 7,
+    "memoria": "últimos 10 turnos por chat_id",
+    "horario": "24/7 (Glamping entrada 3pm, salida 12m; Parapente desde 10am, último 6:30pm)"
+  },
+  "intents": {
+    "saludo_puro": {
+      "description": "Cliente saluda sin contenido adicional (hola, buenos días, qué tal)",
+      "examples": ["hola", "buenos días", "buenas tardes", "buenas noches", "qué tal", "hola!", "buenas"],
+      "keywords": ["^hola$", "^buen[oa]s?\\s*(d[ií]as?|tardes?|noches?)$", "^qu[eé]\\s*tal$"],
+      "response": "¡Hola! 👋 Bienvenido/a a *Green Glamping Chipaque* y *Parapente Volando con Tatán* 🌿🪂\\n\\n¿En qué te podemos ayudar?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "info_servicios": {
+      "description": "Cliente pregunta qué servicios/combos hay",
+      "examples": ["Qué servicios tienen", "Muéstrame los combos", "Qué ofrecen", "Qué hay", "Tienen spa"],
+      "keywords": ["servicio", "combo", "ofrece", "qué hay", "qué tienen", "tienen spa", "qué planes"],
+      "response": "Vive una experiencia única llena de aventura y descanso 🏕️\\n\\nOfrecemos:\\n🪂 *Parapente* biplaza con piloto certificado\\n🏕️ *Glamping Montaña* (guadua con chimenea)\\n💎 *Glamping Cristal* (transparente 360°)\\n🐎 *Cabalgatas*\\n🚙 *Recorridos Cars 4x4*\\n💆 *Spa en pareja con jacuzzi*\\n\\n¿Cuál te llama la atención?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "precio_general": {
+      "description": "Cliente pregunta precios en general",
+      "examples": ["Cuánto cuesta", "Cuál es el precio", "Lista de precios", "Tienen precios", "Valores"],
+      "keywords": ["cu[aá]nto", "precio", "valor", "cuesta", "tarifa", "lista de precios"],
+      "response": "💰 *Nuestros precios (reserva):*\\n• Solo vuelo / cumple / aniversario: $30.000\\n• Glamping + Parapente: $200.000\\n• Combos 1-7: $160.000\\n• Combo 5 (glamping+parapente+spa): $290.000\\n• Parapente individual: $220.000\\n• Spa pareja: $130.000\\n\\nLos precios del catálogo ya son los mínimos posibles, no manejamos descuentos 😊\\n\\n¿Cuál te interesa?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "horarios": {
+      "description": "Cliente pregunta horarios de ingreso/salida",
+      "examples": ["A qué hora atienden", "Horarios", "Check-in", "Check-out", "Hasta qué hora"],
+      "keywords": ["horario", "hora", "check.?in", "check.?out", "a qu[eé] hora", "atienden", "abren"],
+      "response": "📅 *Horarios:*\\n\\n🏕️ *Hospedaje Glamping:*\\n• Check-in: a partir de las *3:00 p.m.*\\n• Check-out: hasta las *12:00 m.*\\n\\n🪂 *Parapente:*\\n• Ingreso desde las *10:00 a.m.*\\n• Recomendamos disponibilidad todo el día\\n• *Último vuelo: 6:30 p.m.*\\n\\n📆 *Atendemos todos los días*",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "ubicacion": {
+      "description": "Cliente pregunta dónde están / cómo llegar",
+      "examples": ["Dónde están", "Ubicación", "Cómo llego", "Dirección", "Quedan lejos", "Como llegar"],
+      "keywords": ["d[oó]nde", "ubicaci[oó]n", "c[oó]mo\\s*llego", "direcci[oó]n", "quedan\\s*lejos", "como llegar", "tan lejos", "lejos del pueblo"],
+      "response": "📍 Estamos en *Chipaque, Cundinamarca*, a 20 min del pueblo 🏔️\\n\\nPuedes llegar:\\n🚗 En carro o moto propio\\n🚌 Transporte público desde Bogotá\\n🚐 Nuestro servicio de transporte: *$60.000 COP por pareja* (ida y regreso desde el municipio de Chipaque)\\n\\nTambién contamos con el *Telecable*: cabina tipo teleférico con vista 360° al aire libre 🚡",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "como_reservar": {
+      "description": "Cliente pregunta cómo reservar/apartar",
+      "examples": ["Cómo reservo", "Cómo aparto", "Cómo pago", "Con cuánto se aparta", "Cómo funciona la reserva"],
+      "keywords": ["c[oó]mo\\s*reserv", "c[oó]mo\\s*apart", "abonar", "con cu[aá]nto", "c[oó]mo\\s*funciona la reserva"],
+      "response": "Para apartar tu lugar necesitas:\\n\\n📋 Nombre completo · Cédula · Teléfono\\n📅 Fecha y combo elegido\\n💳 Comprobante de pago de la reserva\\n\\n¿Quieres que te pase con mi compañera para cerrar la reserva? 🙌",
+      "uses_kb_memory": false,
+      "handoff": true,
+      "handoff_rule": "H01"
+    },
+    "datos_pago": {
+      "description": "Cliente pregunta medios de pago, titular, cuentas",
+      "examples": ["Me regalas los datos de pago", "Nequi de ustedes", "Cuál es la cuenta", "A nombre de quién", "Tienen datáfono", "Pago con tarjeta"],
+      "keywords": ["datos?\\s*de\\s*pago", "nequi", "daviplata", "llave", "cuenta", "titular", "dat[aá]fono", "tarjeta", "pse", "bold"],
+      "response": "💳 *Titular:* Jonathan Eliécer García · C.C. 80.845.317\\n\\n💚 Nequi / Daviplata / Llave: *3124436880*\\n🏦 Davivienda Ahorros: *488400301062*\\n🏦 BBVA Ahorros: *0079209995*\\n\\n🔗 *Bold / Link* (PSE, tarjeta): comisión 6%",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "seleccion_combo": {
+      "description": "Cliente eligió un combo o pregunta por tipos de hospedaje",
+      "examples": ["Quiero el combo 5", "Me interesa el combo aniversario", "Cabaña", "Glamping Montaña", "Glamping Cristal", "Cuál me recomiendas"],
+      "keywords": ["combo", "paquete", "plan", "cabaña", "cabana", "glamping", "cristal", "monta[ñn]a", "peti", "penti", "kars", "cars 4x4", "t[eé] interesa"],
+      "response": "¡Excelente elección! 🙌\\n\\nTenemos dos Glamping:\\n🏕️ *Montaña* — guadua con chimenea, cálido y natural\\n💎 *Cristal* — 100% transparente, vista 360°\\n\\nAmbos tienen capacidad para 2 personas mayores de edad, baño seco (ecológico) y vista espectacular.\\n\\n*Si buscas sensación de cabaña rústica*: el Glamping Montaña (hecho en guadua) es tu opción.\\n\\n¿Para qué fecha lo necesitas? 📅",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "diferencia_glamping": {
+      "description": "Cliente pregunta diferencia entre los tipos de glamping",
+      "examples": ["Diferencia entre glamping", "Cuál es mejor", "Montaña o Cristal", "Qué tienen diferente"],
+      "keywords": ["diferencia", "cu[aá]l\\s*mejor", "cu[aá]l\\s*elijo", "monta[ñn]a\\s*o\\s*cristal"],
+      "response": "🏕️ *Glamping Montaña:*\\nDiseño tipo cabaña en guadua, ideal para disfrutar de una experiencia cálida y natural, con hermosa vista. Baño seco.\\n\\n💎 *Glamping Cristal:*\\nEspectacular diseño 100% en cristal, perfecto para increíble vista panorámica 360°. Baño seco.\\n\\nAmbos: capacidad 2 personas, vistas, naturaleza. La diferencia es el material y la experiencia: rústica-cálida vs moderna-panorámica. ✨\\n\\n¿Cuál te llama más?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "capacidad_glamping": {
+      "description": "Cliente pregunta capacidad del glamping",
+      "examples": ["Cuántas personas caben", "Capacidad", "Para cuántos"],
+      "keywords": ["cu[aá]ntas\\s*personas", "capacidad", "caben", "para cu[aá]ntos", "cabemos"],
+      "response": "Nuestro hospedaje Glamping tiene *capacidad máxima para 2 personas mayores de edad* 👥",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "menores_bebes": {
+      "description": "Cliente pregunta si pueden ir menores/bebés",
+      "examples": ["Puedo ir con mi bebé", "Niños pueden", "Menores de edad", "Con mi hijo"],
+      "keywords": ["beb[eé]", "ni[ñn]o", "menor", "hijo", "hija", "familia", "con mi\\s*hijo", "con mi\\s*bebé"],
+      "response": "👶 *Sobre menores de edad:*\\n\\n*En hospedaje Glamping:* ❌ NO está permitido el ingreso de menores.\\n\\n*En planes pasadía con parapente:* ✅ Sí pueden asistir niños.\\n\\n*Importante:* para la actividad de vuelo, los menores deben asistir con su acudiente o representante legal. Edad mínima: *4 años*.\\n\\n¿Te interesa plan pasadía o hospedaje?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "mascotas": {
+      "description": "Cliente pregunta si puede llevar mascota",
+      "examples": ["Puedo llevar a mi mascota", "Perro", "Gato", "Pet friendly"],
+      "keywords": ["mascota", "perro", "gato", "pet\\s*friendly", "animal", "llevar.*perro"],
+      "response": "🐾 *Sobre mascotas:*\\n\\n*En hospedaje Glamping:* ❌ NO están permitidas.\\n\\n*En planes pasadía / vuelo en parapente:* ✅ Sí puedes traerla.\\n\\n*En el restaurante:* ❌ No permitidas, pero hay zona balcón pet friendly mientras esperas el servicio.\\n\\n¿Qué tipo de plan te interesa?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "comida_externa": {
+      "description": "Cliente pregunta si puede llevar comida/licor/torta/DJ",
+      "examples": ["Puedo llevar comida", "Se puede licor", "Torta de cumple", "DJ", "Músicos"],
+      "keywords": ["comida", "licor", "torta", "cumplea[ñn]o", "dj", "m[uú]sica", "mariachi", "open bar", "decoraci[oó]n"],
+      "response": "🎉 Para ofrecerte la mejor experiencia, contamos con *servicio de restaurante* dentro de las instalaciones. Por eso *no se permite el ingreso de bebidas ni alimentos externos* 🚫\\n\\nPara tortas, decoración, música en vivo o DJ → te paso con mi compañera para evaluar la opción 🙌",
+      "uses_kb_memory": false,
+      "handoff": true,
+      "handoff_rule": "H05"
+    },
+    "cancelacion": {
+      "description": "Cliente pregunta cómo cancelar o cambiar fecha",
+      "examples": ["Cómo cancelo", "Cambio de fecha", "No puedo ir", "Reprogramar"],
+      "keywords": ["cancel", "cambiar fecha", "cambio\\s*de\\s*fecha", "no\\s*puedo\\s*ir", "reprogramar", "cambiar la fecha", "cambia"],
+      "response": "📅 *Política de cambios:*\\n\\n*Glamping:* cambios con *mínimo 15 días* de anticipación.\\n*Parapente:* cambios con *mínimo 2 días* de anticipación.\\n\\nFuera de estos tiempos no se pueden procesar.\\n\\nNo hay devolución de dinero.\\n\\n¿Quieres que te conecte con mi compañera para revisar tu caso?",
+      "uses_kb_memory": false,
+      "handoff": true,
+      "handoff_rule": "H01"
+    },
+    "clima_lluvia": {
+      "description": "Cliente pregunta qué pasa si llueve",
+      "examples": ["Y si llueve", "Se cancela por lluvia", "Mal clima", "Lloviendo"],
+      "keywords": ["llueve", "lluvia", "clima", "mal\\s*tiempo", "tormenta"],
+      "response": "🌧️ *Sobre el clima:*\\n\\nSi por condiciones climáticas no es posible volar, las actividades se *reprograman* para nueva fecha.\\n\\n*Importante:* las reservas de Glamping *NO* se ven afectadas por el clima, mantienen su programación normal.\\n\\n¿Te gustaría apartar una fecha?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "transporte": {
+      "description": "Cliente pregunta por servicio de transporte",
+      "examples": ["Transporte", "Cómo llego desde Bogotá", "Me llevan", "Recogen"],
+      "keywords": ["transporte", "recogen", "llevan", "c[oó]mo\\s*llegar\\s*desde", "desde bogot"],
+      "response": "🚐 *Servicio de transporte:*\\n\\nOfrecemos transporte desde el municipio de *Chipaque* hasta nuestras instalaciones.\\n\\n💰 *Valor:* $60.000 COP por pareja (ida y regreso)\\n\\nTambién:\\n🚗 Puedes venir en carro o moto propio\\n🚌 Transporte público desde Bogotá\\n🚡 *Telecable*: cabina tipo teleférico con vista 360° al aire libre\\n\\n¿Cuál te conviene?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "parqueadero": {
+      "description": "Cliente pregunta por parqueadero",
+      "examples": ["Parqueadero", "Dónde parqueo", "Puedo dejar el carro"],
+      "keywords": ["parqueadero", "parqueo", "estacionamiento", "dejar el carro", "donde dejo"],
+      "response": "🅿️ *Sí, contamos con parqueadero.*\\n\\n*Si llegas por la vía peatonal:*\\n🏍️ Moto: $5.000 COP\\n🚗 Carro: $8.000 COP\\n\\n*Si llegas por el Telecable:* ¡el parqueadero es *gratis*! 🎉",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "restaurante": {
+      "description": "Cliente pregunta por restaurante/comida en el sitio",
+      "examples": ["Tienen restaurante", "Comida en el sitio", "Menú", "Carta"],
+      "keywords": ["restaurante", "comida\\s*en\\s*el\\s*sitio", "men[uú]", "carta", "comida\\s*all[ií]"],
+      "response": "🍽️ ¡Claro! En nuestras instalaciones contamos con *servicio de restaurante* con variedad de bebidas y alimentos.\\n\\n*Importante:* NO se permite ingreso de bebidas externas.\\n\\nRecuerda que el combo 5 y algunos hospedajes incluyen carta hasta $20.000 por persona 🍴",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "wifi": {
+      "description": "Cliente pregunta por WiFi/señal",
+      "examples": ["Hay WiFi", "Tienen señal", "Internet"],
+      "keywords": ["wifi", "wi-fi", "se[ñn]al", "internet"],
+      "response": "📶 Sí, contamos con WiFi en las instalaciones.\\n\\n⚠️ Estamos en la punta de la montaña más alta del oriente de Cundinamarca, así que cuando hay nube baja la señal puede ser inestable. Es parte de la experiencia de *desconexión y conexión con la naturaleza* 🌄",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "spa_jacuzzi": {
+      "description": "Cliente pregunta por spa/jacuzzi",
+      "examples": ["Tienen jacuzzi", "Spa", "Hidromasaje"],
+      "keywords": ["jacuzzi", "spa", "hidromasaje", "relajaci[oó]n"],
+      "response": "💆 Sí, puedes mejorar tu experiencia agregando el *servicio de spa en pareja con jacuzzi* por un costo adicional.\\n\\n✨ Además, por ser huésped accedes a una *súper oferta promocional exclusiva* 💚\\n\\n¿Para cuándo lo quieres?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "duracion_actividades": {
+      "description": "Cliente pregunta cuánto dura cada actividad",
+      "examples": ["Cuánto dura", "Tiempo de vuelo", "Cuánto tiempo", "Duración"],
+      "keywords": ["dura", "duraci[oó]n", "cu[aá]nto\\s*tiempo", "tiempo de vuelo"],
+      "response": "⏱️ *Duración de actividades:*\\n\\n🪂 *Vuelo en parapente:* 10-20 min aprox\\n🐎 *Cabalgatas:* 40-60 min aprox\\n🚙 *Cars 4x4:* 40-60 min aprox\\n💆 *Spa:* 1 hora aprox\\n\\nPara parapente, el último vuelo es 6:30 p.m. 🌅",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "contraindicaciones_parapente": {
+      "description": "Cliente pregunta contraindicaciones del parapente",
+      "examples": ["Puedo volar con X", "Tengo problema de", "Es seguro", "Riesgos", "Embarazada"],
+      "keywords": ["embaraz", "contraindica", "problema.*columna", "card[ií]aco", "100\\s*kg", "es seguro", "riesgo", "me pasa algo"],
+      "response": "⚠️ *Contraindicaciones del parapente:*\\n\\n❌ No estar en estado de embarazo\\n❌ No tener problemas de columna\\n❌ No tener problemas cardíacos\\n❌ No superar los *100 kg* de peso\\n\\n✅ Desde los *4 años* con tutor o representante legal.\\n\\nActividad tándem: 1 piloto certificado + 1 pasajero. Licencia vigente de la Aeronáutica Civil ✈️\\n\\n¿Tienes alguna duda específica?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "edad_volar": {
+      "description": "Cliente pregunta desde qué edad se puede volar",
+      "examples": ["Mi hijo de X años puede", "Edad mínima", "Niños pueden volar", "Bebé puede"],
+      "keywords": ["desde qu[eé]\\s*edad", "edad m[ií]nima", "puede\\s*volar", "ni[ñn]o.*volar"],
+      "response": "🪂 La actividad de vuelo se puede realizar *desde los 4 años* de edad, siempre y cuando el menor asista con su tutor o representante legal.\\n\\nActividad en modalidad tándem (1 piloto + 1 pasajero).",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "tandem_dos_personas": {
+      "description": "Cliente pregunta si pueden volar 2 personas en el mismo parapente",
+      "examples": ["Dos personas juntas", "Volar juntos", "Tándem para dos"],
+      "keywords": ["dos personas", "volar juntos", "t[aá]nden\\s*para\\s*dos", "ambos", "mi pareja"],
+      "response": "🪂 Nuestras actividades se realizan en *modalidad tándem*: 1 persona como pasajero + 1 piloto certificado.\\n\\nEs decir, en cada parapente va *1 pasajero* (siempre). Si quieren volar los dos, hacemos *2 vuelos* sucesivos (o simultáneos según disponibilidad).\\n\\n¿Te interesa para cuándo?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "convenio_parapente_sabana": {
+      "description": "Cliente pregunta por convenio con Parapente Sabana",
+      "examples": ["Parapente Sabana", "Tienen convenio", "Empresa aliada"],
+      "keywords": ["parapente sabana", "convenio", "aliada", "otra empresa"],
+      "response": "Sí, *Parapente Sabana* es nuestra empresa aliada comercialmente 🪂\\n\\nUtiliza nuestras instalaciones para prestar sus servicios de vuelo, con la misma calidad y seguridad que manejamos nosotros. Todos los pilotos cuentan con licencia vigente de la Aeronáutica Civil ✈️",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "tarjeta_invitacion": {
+      "description": "Cliente pregunta por tarjeta de invitación personalizada",
+      "examples": ["Tarjeta personalizada", "Invitación especial", "Tarjeta de cumple"],
+      "keywords": ["tarjeta", "invitaci[oó]n\\s*personalizada", "de para", "tarjeta de cumple"],
+      "response": "💌 La *tarjeta de invitación personalizada* es un detalle opcional y *no tiene costo adicional* 💚\\n\\nPara hacerla, pídela con *mínimo 3 días* de antelación y compártenos:\\n📝 *De:*\\n📝 *Para:*\\n\\n¿Quieres que te conecte con mi compañera para agendarla?",
+      "uses_kb_memory": false,
+      "handoff": true,
+      "handoff_rule": "H01"
+    },
+    "telecable": {
+      "description": "Cliente pregunta qué es el Telecable",
+      "examples": ["Qué es Telecable", "Cómo subo", "Teleférico"],
+      "keywords": ["telecable", "telef[eé]rico", "cabina", "c[aá]mo\\s*subo", "como se llega"],
+      "response": "🚡 El *Telecable* es nuestro servicio de transporte a las instalaciones.\\n\\nEs una *cabina tipo teleférico*, completamente al aire libre, con una *espectacular vista de 360°* durante el recorrido 🌄\\n\\n*Bonus:* si llegas por Telecable, ¡el parqueadero es *gratis*! 🅿️✨",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "bano_seco": {
+      "description": "Cliente pregunta qué es el baño seco",
+      "examples": ["Qué es baño seco", "Hay baño", "Baño ecológico"],
+      "keywords": ["ba[ñn]o\\s*seco", "ba[ñn]o\\s*ecol[oó]gico", "servicio.*ba[ñn]o"],
+      "response": "🚽 El *baño seco* es un tipo de baño *ecológico* que no usa agua, sino material secante.\\n\\nEstá disponible en nuestras instalaciones bajo la modalidad de *Glamping Montaña* 🌿",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "nevera_bar": {
+      "description": "Cliente pregunta si hay nevera o zona de bar en el glamping",
+      "examples": ["Hay nevera", "Tienen minibar", "Zona de bar"],
+      "keywords": ["nevera", "minibar", "zona\\s*de\\s*bar", "barra", "heladera"],
+      "response": "🧊 Por ahora, nuestros Glamping *no cuentan con nevera ni zona de bar* propia.\\n\\nPero en las instalaciones encontrarás nuestro *restaurante* con variedad de alimentos y bebidas 🍽️",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "es_empresa_real": {
+      "description": "Cliente desconfía o pregunta si es empresa real/legítima",
+      "examples": ["Es real", "Son empresa", "Tienen papeles", "Es legítimo", "Cómo sé que existen"],
+      "keywords": ["es\\s*real", "son\\s*empresa", "papeles", "leg[ií]timo", "existen", "confianza", "desconfianza", "estafa"],
+      "response": "💚 ¡Entendemos tu desconfianza!\\n\\n1. 📱 Síguenos en nuestras redes sociales donde verás las experiencias de muchas personas\\n2. 📜 Contamos con *licencia de turismo registrada bajo el No. 219365* — respalda la legalidad y confianza\\n3. 🪂 Todos nuestros pilotos tienen *licencia vigente* de la Aeronáutica Civil\\n\\n¿Te gustaría reservar con total tranquilidad?",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "despedida": {
+      "description": "Cliente cierra la conversación amablemente",
+      "examples": ["Gracias", "Muchas gracias", "Ok perfecto", "Listo", "Chao", "Hasta luego"],
+      "keywords": ["^gracias$", "muchas gracias", "^chao$", "adi[oó]s", "hasta luego", "^listo$"],
+      "response": "¡Hasta pronto! 🌿\\n\\nFue un gusto atenderte. Te esperamos pronto en *Green Glamping Chipaque* ✨\\n\\nSi necesitas algo más, escríbenos cuando quieras 💚",
+      "uses_kb_memory": false,
+      "handoff": false
+    },
+    "hablar_humano": {
+      "description": "Cliente pide hablar con una persona real",
+      "examples": ["Quiero hablar con una persona", "Me pasas con un asesor", "Hay otro número", "Necesito atención personalizada", "Quiero que me llamen"],
+      "keywords": ["hablar\\s*con\\s*persona", "hablar\\s*con\\s*alguien", "asesor\\s*real", "que\\s*me\\s*llamen", "atenci[oó]n\\s*personalizada", "otro\\s*n[uú]mero", "tel[eé]fono\\s*fijo", "l[ií]nea", "oficina", "sucursal"],
+      "response": "¡Perfecto! Ya te paso con mi compañera 🙌\\n\\nEn un momento ella te escribe por este mismo chat. Mientras tanto, ¿hay algo más en lo que te pueda ayudar?",
+      "uses_kb_memory": false,
+      "handoff": true,
+      "handoff_rule": "H02"
+    },
+    "queja": {
+      "description": "Cliente reporta problema o está molesto",
+      "examples": ["Pésimo servicio", "No me han contestado", "Esto es un robo", "Quiero una queja formal"],
+      "keywords": ["p[eé]simo", "queja", "reclamo", "estafa", "robo", "fraude", "molesto", "enojado", "no me\\s*contestaron"],
+      "response": "Entendemos tu molestia y queremos solucionarlo lo antes posible 🙏\\n\\nTe conectamos de inmediato con la persona encargada. Te contactamos en breve.",
+      "uses_kb_memory": false,
+      "handoff": true,
+      "handoff_rule": "H03"
+    }
+  },
+  "objeciones_precio": {
+    "O1_descuento": {
+      "trigger": "Piden descuento",
+      "keywords": ["descuento", "rebaja", "m[aá]s barato", "precio especial", "oferta", "promo", "cup[oó]n"],
+      "response": "Los precios del catálogo ya son los mínimos posibles, incluyen todo lo descrito en el portafolio. No manejamos descuentos sobre los combos publicados 😊"
+    },
+    "O2_quitar_servicio": {
+      "trigger": "Quieren quitar un servicio del combo para abaratar",
+      "keywords": ["sin spa", "sin parapente", "quitar el", "solo glamping", "solo vuelo"],
+      "response": "El precio del combo incluye los servicios tal como están publicados. Si deseas un combo diferente, te puedo mostrar las opciones del catálogo, pero los precios son fijos por combo 🙌"
+    },
+    "O3_comparacion": {
+      "trigger": "Comparan con otra empresa",
+      "keywords": ["en otro lugar", "m[aá]s barato en", "competencia", "otros ofrecen", "vi en otra p[aá]gina"],
+      "response": "Entiendo. Cada lugar maneja sus precios. Lo que te ofrecemos incluye Glamping, parapente con piloto certificado, spa, cabalgatas, kars 4x4 y vistas 360° con todas las medidas de seguridad (licencia 219365, pilotos certificados) 😊\\n\\n¿Quieres que te comparta el portafolio para comparar lo que incluyes?"
+    },
+    "O4_precio_mas_bajo": {
+      "trigger": "Piden precio más bajo posible",
+      "keywords": ["m[aá]s bajo", "m[ií]nimo", "cu[aá]nto\\s*es\\s*lo\\s*m[ií]nimo", "lo m[aá]s econ[oó]mico"],
+      "response": "El precio más bajo es el que está en el catálogo, ese es el valor final del combo. No tenemos un precio menor al publicado 🏕️"
+    },
+    "O5_presupuesto_ajustado": {
+      "trigger": "Cliente dice que está ajustado de presupuesto",
+      "keywords": ["ajustado", "no me alcanza", "estoy corto", "presupuesto", "caro para m[ií]"],
+      "response": "Te entiendo. Si quieres, puedo mostrarte las opciones de menor valor: *Solo vuelo / cumple / aniversario: $30.000 reserva* o *Spa pareja: $30.000 reserva*. También puedes separar la fecha para más adelante 😊"
+    },
+    "O6_pago_contado": {
+      "trigger": "Piden descuento por pago de contado",
+      "keywords": ["pago\\s*de\\s*contado", "pago\\s*total", "si\\s*pago\\s*todo", "completo"],
+      "response": "El precio es el mismo independientemente de la forma de pago. La reserva se hace con el valor publicado y el saldo se cancela en efectivo en el sitio a la llegada 💚"
+    }
+  },
+  "handoff_triggers": {
+    "H01": {
+      "nombre": "Cliente eligió combo + fecha o pidió reservar",
+      "prioridad": 1,
+      "condicion": "intent IN (seleccion_combo, disponibilidad, como_reservar, tarjeta_invitacion, cancelacion)",
+      "notifica_a": ["Johana"]
+    },
+    "H02": {
+      "nombre": "Cliente pide hablar con humano",
+      "prioridad": 1,
+      "condicion": "intent == 'hablar_humano'",
+      "notifica_a": ["Johana"]
+    },
+    "H03": {
+      "nombre": "Cliente reporta queja",
+      "prioridad": 1,
+      "condicion": "intent == 'queja'",
+      "notifica_a": ["Johana", "supervisor"]
+    },
+    "H04": {
+      "nombre": "Cliente pregunta por descuentos (objeción de precio)",
+      "prioridad": 2,
+      "condicion": "objecion IN (O1, O2, O3, O4, O5, O6)",
+      "notifica_a": ["Johana"]
+    },
+    "H05": {
+      "nombre": "Cliente pide servicio no catalogado (torta, DJ, decoración)",
+      "prioridad": 2,
+      "condicion": "intent == 'comida_externa'",
+      "notifica_a": ["Johana"]
+    },
+    "H06": {
+      "nombre": "Cliente pide número alternativo / oficina",
+      "prioridad": 2,
+      "condicion": "keywords: otro número, teléfono fijo, oficina, sucursal",
+      "notifica_a": ["Johana"]
+    },
+    "H07": {
+      "nombre": "Más de 3 turnos sin clasificar (intent='otro')",
+      "prioridad": 3,
+      "condicion": "ultimos_3_turnos_intent == 'otro'",
+      "notifica_a": ["Johana"]
+    }
+  },
+  "memoria": {
+    "tabla": "messages",
+    "max_turnos": 10,
+    "campos": ["chat_id", "role ('user'|'bot')", "body", "intent", "ts"],
+    "uso": "Si el bot ya respondió X pregunta en los últimos 5 turnos, NO repetirla. Si el cliente cambia de tema, usar memoria para coherencia (ej: ya eligió combo 5 → no volver a preguntar)."
+  }
+}

@@ -1,0 +1,25 @@
+# Media del cliente — versionado parcial
+#
+# Se versionan: archivos pequeños y referenciados por código (audios .txt
+# que son guiones, prompts, etc.).
+# Se ignoran: binarios pesados que se regeneran o se sirven desde un CDN.
+#
+# Ajustá esta lista según el cliente.
+
+# Audio binario grande (TTS generado, voces clonadas, etc.)
+*.ogg
+*.mp3
+*.wav
+*.flac
+*.m4a
+
+# Video
+*.mp4
+*.mov
+*.webm
+
+# Imágenes pesadas / generadas
+*.psd
+*.ai
+*.sketch
+*.fig

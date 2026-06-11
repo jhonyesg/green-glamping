@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}IA / LLM — {{ tenant }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Proveedores de IA (LLM)</h1>
+  <p class="subtitle">
+    Tenant:
+    <select class="form-control" style="display:inline-block;width:auto;padding:.2rem .5rem"
+            onchange="location.href='/admin/llm?tenant='+this.value">
+      {% for t in tenants %}
+      <option value="{{ t.slug }}" {% if t.slug == tenant %}selected{% endif %}>{{ t.name }}</option>
+      {% endfor %}
+    </select>
+  </p>
+</div>
+
+<div class="alert alert-info">
+  <strong>Cómo funciona la IA en Multibot:</strong> el bot responde primero con la
+  <em>base de conocimiento</em> (regex, 0 costo, &lt;100ms). El LLM se usa solo para lo que el regex
+  no cubre: transcribir audios (STT), describir imágenes (vision), generar voz (TTS) y, a futuro,
+  responder preguntas fuera de la KB. Si configuras varios proveedores, se usan en orden de
+  prioridad con failover automático.
+</div>
+
+<div style="display:grid;grid-template-columns:3fr 2fr;gap:1.5rem">
+  <div class="card">
+    <h3>Proveedores configurados</h3>
+    {% if providers %}
+    <table>
+      <thead><tr><th>Proveedor</th><th>Modelo</th><th>Capacidades</th><th>Prioridad</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        {% for p in providers %}
+        <tr>
+          <td><strong>{{ p.provider_name }}</strong>
+            {% if p.base_url %}<br><small style="color:var(--color-text-muted)">{{ p.base_url[:40] }}</small>{% endif %}
+          </td>
+          <td><code style="font-size:.8rem">{{ p.model }}</code></td>
+          <td>
+            {% set caps = p.capabilities or {} %}
+            {% if caps.get('audio_input') %}<span class="badge badge-blue">audio</span>{% endif %}
+            {% if caps.get('vision') %}<span class="badge badge-blue">vision</span>{% endif %}
+            {% if caps.get('tts') %}<span class="badge badge-blue">tts</span>{% endif %}
+            {% if not caps.get('audio_input') and not caps.get('vision') and not caps.get('tts') %}
+            <span class="badge badge-gray">solo texto</span>
+            {% endif %}
+          </td>
+          <td>{{ p.priority }}</td>
+          <td><span class="badge {{ 'badge-green' if p.is_active else 'badge-gray' }}">{{ 'activo' if p.is_active else 'inactivo' }}</span></td>
+          <td style="display:flex;gap:.3rem">
+            <form method="post" action="/admin/llm/{{ p.id }}/toggle?tenant={{ tenant }}">
+              <button class="btn btn-secondary" style="padding:.25rem .6rem;font-size:.75rem">
+                {{ 'Desactivar' if p.is_active else 'Activar' }}
+              </button>
+            </form>
+            <form method="post" action="/admin/llm/{{ p.id }}/delete?tenant={{ tenant }}"
+                  onsubmit="return confirm('¿Eliminar este proveedor?')">
+              <button class="btn" style="background:#ffebee;color:#c62828;padding:.25rem .6rem;font-size:.75rem">✕</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--color-text-muted)">
+      Sin proveedores configurados. El bot funciona 100% con la base de conocimiento (regex) —
+      agrega un proveedor para habilitar audio, imágenes o respuestas generadas.
+    </p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3>Agregar proveedor</h3>
+    <form method="post" action="/admin/llm/new">
+      <input type="hidden" name="tenant" value="{{ tenant }}">
+      <div class="form-group">
+        <label>Tipo de proveedor</label>
+        <select class="form-control" name="provider_type" id="ptype" onchange="applyPreset(this.value)">
+          {% for key, p in presets.items() %}
+          <option value="{{ key }}">{{ p.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>API Key</label>
+        <input class="form-control" name="api_key" id="pkey" type="password" placeholder="sk-... (se guarda cifrada)">
+        <p class="form-hint">Se cifra antes de guardarse. Vacío para Ollama local.</p>
+      </div>
+      <div class="form-group">
+        <label>Base URL (opcional)</label>
+        <input class="form-control" name="base_url" id="purl" placeholder="https://api.openai.com/v1">
+      </div>
+
+      <div class="form-group">
+        <label>Modelo</label>
+        <div style="display:flex;gap:.4rem">
+          <button class="btn btn-secondary" type="button" id="fetch-models" style="white-space:nowrap">
+            🔍 Obtener modelos
+          </button>
+          <select class="form-control" id="pmodel-select" style="display:none" onchange="onModelPick(this)"></select>
+        </div>
+        <input class="form-control" name="model" id="pmodel" required
+               placeholder="o escríbelo manualmente..." style="margin-top:.4rem">
+        <p class="form-hint" id="models-hint">Pulsa "Obtener modelos" para consultar la lista real del proveedor con tu API key</p>
+      </div>
+
+      <div class="form-group">
+        <label>Prioridad</label>
+        <input class="form-control" type="number" name="priority" value="0" min="0" max="100" style="max-width:100px">
+        <p class="form-hint">Mayor = se intenta primero. Si falla, pasa al siguiente.</p>
+      </div>
+      <div class="form-group">
+        <label>Capacidades <small style="font-weight:400;color:var(--color-text-muted)">(se detectan solas al elegir modelo)</small></label>
+        <label style="display:block;font-weight:400"><input type="checkbox" name="cap_audio" value="true" id="cap-audio"> 🎤 Audio — transcribir notas de voz</label>
+        <label style="display:block;font-weight:400"><input type="checkbox" name="cap_vision" value="true" id="cap-vision"> 👁 Vision — leer imágenes y comprobantes</label>
+        <p class="form-hint">🔊 La voz (TTS) se configura por aparte en la sección <a href="/admin/tts?tenant={{ tenant }}">TTS</a> — siempre va separada del modelo de chat.</p>
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%">Agregar proveedor</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const PRESETS = {{ presets | tojson }};
+let MODEL_CAPS = {};
+
+function applyPreset(key) {
+  const p = PRESETS[key];
+  if (!p) return;
+  document.getElementById('purl').value = p.base_url;
+  document.getElementById('pmodel').value = '';
+  document.getElementById('pmodel-select').style.display = 'none';
+  document.getElementById('models-hint').textContent =
+    'Pulsa "Obtener modelos" para consultar la lista real del proveedor con tu API key';
+}
+applyPreset(document.getElementById('ptype').value);
+
+document.getElementById('fetch-models').addEventListener('click', async () => {
+  const btn = document.getElementById('fetch-models');
+  const hint = document.getElementById('models-hint');
+  btn.disabled = true; btn.textContent = '⏳';
+  try {
+    const fd = new FormData();
+    fd.append('provider_type', document.getElementById('ptype').value);
+    fd.append('api_key', document.getElementById('pkey').value);
+    fd.append('base_url', document.getElementById('purl').value);
+    const resp = await fetch('/admin/llm/models', { method: 'POST', body: fd });
+    const d = await resp.json();
+    if (d.error) { hint.textContent = '⚠ ' + d.error; hint.style.color = '#c62828'; return; }
+
+    hint.style.color = '';
+    hint.textContent = '✓ ' + d.source + ' — al elegir, las capacidades se marcan solas';
+    MODEL_CAPS = {};
+    const sel = document.getElementById('pmodel-select');
+    sel.innerHTML = '<option value="">— Elegir modelo —</option>';
+    d.models.forEach(m => {
+      MODEL_CAPS[m.id] = m;
+      const tags = [m.vision ? '👁' : '', m.audio ? '🎤' : ''].join('');
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.id + (tags ? '  ' + tags : '');
+      sel.appendChild(opt);
+    });
+    sel.style.display = '';
+  } catch(err) {
+    hint.textContent = '⚠ Error: ' + err.message;
+    hint.style.color = '#c62828';
+  } finally {
+    btn.disabled = false; btn.textContent = '🔍 Obtener modelos';
+  }
+});
+
+function onModelPick(sel) {
+  if (!sel.value) return;
+  document.getElementById('pmodel').value = sel.value;
+  const caps = MODEL_CAPS[sel.value] || {};
+  document.getElementById('cap-audio').checked = !!caps.audio;
+  document.getElementById('cap-vision').checked = !!caps.vision;
+}
+</script>
+{% endblock %}

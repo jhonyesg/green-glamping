@@ -1,0 +1,8 @@
+=== AUDIO 01c: BIENVENIDA / SALUDO NOCHE ===
+ID: audio_bienvenida_noche
+USO: Saludo entre 18:00 y 6:00. Rota con 01a y 01b.
+DURACIÓN APROX: 7 segundos
+
+TEXTO A GRABAR / TTS:
+"¡Hola! Gracias por escribirnos. Te atiende el equipo de Green Glamping Chipaque. ¿En qué te podemos ayudar?"
+IMPORTANTE: Decir en primera persona del equipo. Nunca decir "soy bot".

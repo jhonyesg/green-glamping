@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Usuarios{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Usuarios</h1>
+  <p class="subtitle">Gestiona el acceso al panel — solo visible para el superadmin</p>
+</div>
+
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+{% if ok %}<div class="alert alert-success">{{ ok }}</div>{% endif %}
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem">
+  <div class="card">
+    <h3>Usuarios existentes</h3>
+    <table>
+      <thead>
+        <tr><th>Usuario</th><th>Rol</th><th>Tenant</th><th>Estado</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>admin</strong></td>
+          <td><span class="badge badge-red">superadmin</span></td>
+          <td>— (todos)</td>
+          <td><span class="badge badge-green">activo</span></td>
+          <td style="color:var(--color-text-muted);font-size:.8rem">definido en .env</td>
+        </tr>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.username }}</td>
+          <td>
+            <span class="badge {{ 'badge-red' if u.role == 'superadmin' else 'badge-blue' }}">{{ u.role }}</span>
+          </td>
+          <td>{{ u.tenant_slug or '— (todos)' }}</td>
+          <td>
+            <span class="badge {{ 'badge-green' if u.is_active else 'badge-gray' }}">
+              {{ 'activo' if u.is_active else 'inactivo' }}
+            </span>
+          </td>
+          <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+            <form method="post" action="/admin/users/{{ u.id }}/toggle">
+              <button class="btn btn-secondary" style="padding:.25rem .6rem;font-size:.75rem">
+                {{ 'Desactivar' if u.is_active else 'Activar' }}
+              </button>
+            </form>
+            <details style="display:inline-block">
+              <summary class="btn" style="padding:.25rem .6rem;font-size:.75rem;background:#fff3e0;color:#e65100;cursor:pointer;list-style:none">Cambiar clave</summary>
+              <form method="post" action="/admin/users/{{ u.id }}/password" style="display:flex;gap:.3rem;margin-top:.4rem">
+                <input class="form-control" name="new_password" type="password" placeholder="Nueva contraseña" required minlength="8" style="font-size:.8rem;padding:.25rem .5rem">
+                <button class="btn btn-primary" style="padding:.25rem .6rem;font-size:.75rem">OK</button>
+              </form>
+            </details>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Crear usuario</h3>
+    <form method="post" action="/admin/users/new">
+      <div class="form-group">
+        <label for="username">Usuario</label>
+        <input class="form-control" id="username" name="username" required
+               pattern="[a-z0-9\-_.]+" placeholder="greenglamping">
+        <p class="form-hint">Minúsculas, sin espacios</p>
+      </div>
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input class="form-control" id="password" name="password" type="password"
+               required minlength="8" placeholder="Mínimo 8 caracteres">
+      </div>
+      <div class="form-group">
+        <label for="role">Rol</label>
+        <select class="form-control" id="role" name="role" onchange="document.getElementById('tenant-field').style.display = this.value === 'client' ? '' : 'none'">
+          <option value="client">Cliente (acceso a su tenant)</option>
+          <option value="superadmin">Superadmin (acceso total)</option>
+        </select>
+      </div>
+      <div class="form-group" id="tenant-field">
+        <label for="tenant_id">Tenant asignado</label>
+        <select class="form-control" id="tenant_id" name="tenant_id">
+          <option value="">— Seleccionar —</option>
+          {% for t in tenants %}
+          <option value="{{ t.id }}">{{ t.name }} ({{ t.slug }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%">Crear usuario</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

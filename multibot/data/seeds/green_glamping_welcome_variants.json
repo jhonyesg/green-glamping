@@ -1,0 +1,38 @@
+{
+  "variants": {
+    "default": "¡Hola! 👋 Bienvenido/a a *Green Glamping Chipaque* y *Parapente Volando con Tatán* 🌿🪂\n\n¿En qué te podemos ayudar?",
+    "bienvenida_manana": "¡Buenos días! ☀️ Bienvenido/a a *Green Glamping Chipaque* y *Parapente Volando con Tatán* 🌿🪂\n\nEmpieza el día con una aventura. ¿En qué te podemos ayudar?",
+    "bienvenida_tarde": "¡Buenas tardes! 🌤️ Bienvenido/a a *Green Glamping Chipaque* y *Parapente Volando con Tatán* 🌿🪂\n\n¿En qué te podemos ayudar?",
+    "bienvenida_noche": "¡Buenas noches! 🌙 Bienvenido/a a *Green Glamping Chipaque* y *Parapente Volando con Tatán* 🌿🪂\n\nEscríbenos y con gusto te atendemos. ¿En qué te ayudamos?",
+    "bienvenida_recurrente": "¡Hola de nuevo! 💚 Es un placer verte otra vez en *Green Glamping Chipaque*.\n\n¿En qué te podemos ayudar hoy?",
+    "bienvenida_anuncio": "¡Hola! 👋 Bienvenido/a a *Green Glamping Chipaque* 🌿🪂\n\n✨ *¡Tenemos novedades!* Pregúntanos por nuestros nuevos combos y promociones.\n\n¿En qué te ayudamos?",
+    "bienvenida_referido": "¡Hola! 👋 Alguien nos recomendó contigo 💚\n\nBienvenido/a a *Green Glamping Chipaque* y *Parapente Volando con Tatán* 🌿🪂\n\n¿En qué te podemos ayudar?"
+  },
+  "cascade_messages": [
+    {
+      "type": "text",
+      "delay_ms": 0,
+      "content": "{{welcome_variant}}"
+    },
+    {
+      "type": "image",
+      "delay_ms": 800,
+      "description": "Foto portafolio 1 (glamping cristal)"
+    },
+    {
+      "type": "image",
+      "delay_ms": 1600,
+      "description": "Foto portafolio 2 (parapente)"
+    },
+    {
+      "type": "text",
+      "delay_ms": 2400,
+      "content": "{{saludo_por_hora}}"
+    },
+    {
+      "type": "text",
+      "delay_ms": 3200,
+      "content": "¿Qué plan te llama la atención hoy? 🏕️🪂"
+    }
+  ]
+}

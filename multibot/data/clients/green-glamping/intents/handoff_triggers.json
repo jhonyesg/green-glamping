@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "description": "Reglas que disparan handoff al equipo humano. El motor en n8n evalúa estas reglas en orden; si alguna coincide, transfiere.",
+  "triggers": [
+    {
+      "id": "H01",
+      "nombre": "Cliente eligió combo + fecha y confirma reserva",
+      "prioridad": 1,
+      "condicion": "(intent == 'datos_cliente') OR (intent == 'seleccion_fecha' AND ya_eligio_combo == true)",
+      "accion": "handoff_inmediato",
+      "audio": "06_handoff",
+      "notificar": ["asesor_principal"]
+    },
+    {
+      "id": "H02",
+      "nombre": "Cliente pide hablar con humano",
+      "prioridad": 1,
+      "condicion": "intent == 'hablar_humano'",
+      "accion": "handoff_inmediato",
+      "audio": "06_handoff"
+    },
+    {
+      "id": "H03",
+      "nombre": "Cliente reporta queja",
+      "prioridad": 1,
+      "condicion": "intent == 'queja'",
+      "accion": "handoff_inmediato",
+      "audio": null,
+      "notificar": ["supervisor"]
+    },
+    {
+      "id": "H04",
+      "nombre": "Cliente pregunta por descuentos",
+      "prioridad": 2,
+      "condicion": "mensaje contiene: descuento | promo | oferta | cupón | codigo | rebaja | más barato",
+      "accion": "handoff",
+      "audio": null
+    },
+    {
+      "id": "H05",
+      "nombre": "Cliente pide servicio no catalogado",
+      "prioridad": 2,
+      "condicion": "mensaje contiene: torta de cumpleaños | decoración especial | open bar | música en vivo | dj | mariachi | video profesional | drones",
+      "accion": "handoff",
+      "audio": null
+    },
+    {
+      "id": "H06",
+      "nombre": "Cliente pide número alternativo",
+      "prioridad": 2,
+      "condicion": "mensaje contiene: otro número | teléfono fijo | línea de atención | sucursal | oficina",
+      "accion": "handoff",
+      "audio": null
+    },
+    {
+      "id": "H07",
+      "nombre": "Más de 3 turnos sin resolver",
+      "prioridad": 3,
+      "condicion": "turnos_sin_resolver >= 3 AND intent == 'otro'",
+      "accion": "handoff_suave",
+      "audio": "06_handoff"
+    }
+  ],
+  "configuracion_horario": {
+    "timezone": "America/Bogota",
+    "atencion": {
+      "inicio": "08:00",
+      "fin": "17:00",
+      "dias": ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
+    },
+    "fuera_de_horario": {
+      "responder": "audio_horario",
+      "reasignar": "siguiente_dia_habil"
+    }
+  }
+}

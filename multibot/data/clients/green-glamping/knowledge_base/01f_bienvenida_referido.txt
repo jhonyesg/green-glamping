@@ -1,0 +1,8 @@
+=== AUDIO 01f: BIENVENIDA / REFERIDO ===
+ID: audio_bienvenida_referido
+USO: Cuando el cliente llega con la etiqueta "referred_by=[NOMBRE]".
+DURACIÓN APROX: 8 segundos
+
+TEXTO A GRABAR / TTS:
+"¡Hola! Nos alegra que te hayan recomendado. Bienvenido a Green Glamping Chipaque. ¿Buscas escapada en pareja, con amigos o aventura?"
+IMPORTANTE: Decir en primera persona del equipo. Nunca decir "soy bot".

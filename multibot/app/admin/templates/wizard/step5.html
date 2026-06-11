@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Nuevo tenant — Paso 5{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Nuevo tenant</h1></div>
+
+<div class="wizard-steps">
+  {% for num, label in steps %}
+  <div class="wizard-step {{ 'active' if current_step == num else 'done' if current_step > num else '' }}">
+    {{ num }}. {{ label }}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card" style="max-width:600px">
+  <h3>Paso 5 — Mensaje de bienvenida</h3>
+  <p style="color:var(--color-text-muted);margin-bottom:1rem">
+    Configura el mensaje inicial que el bot enviará al primer contacto.
+  </p>
+  <form method="post" action="/admin/wizard/step/5">
+    <input type="hidden" name="slug" value="{{ slug }}">
+    <input type="hidden" name="name" value="{{ name }}">
+    <input type="hidden" name="operation_mode" value="{{ operation_mode }}">
+    <input type="hidden" name="channel_type" value="{{ channel_type }}">
+    <input type="hidden" name="bot_token" value="{{ bot_token }}">
+    <input type="hidden" name="short_pause_hours" value="{{ short_pause_hours }}">
+    <input type="hidden" name="long_pause_hours" value="{{ long_pause_hours }}">
+
+    <div class="form-group">
+      <label for="welcome_message">Mensaje de bienvenida</label>
+      <textarea class="form-control" id="welcome_message" name="welcome_message"
+                rows="4" placeholder="¡Hola! Bienvenido a {{ name }}. ¿En qué puedo ayudarte?">{{ welcome_message | default('¡Hola! Bienvenido. ¿En qué puedo ayudarte?') }}</textarea>
+      <p class="form-hint">Puedes usar emojis. Máximo 500 caracteres.</p>
+    </div>
+
+    <div class="alert alert-info">
+      <strong>Nota:</strong> Los assets multimedia (fotos, logos) se pueden subir desde el panel
+      de KB una vez el tenant esté creado.
+    </div>
+
+    <div class="form-actions">
+      <a href="/admin/wizard" class="btn btn-secondary">← Atrás</a>
+      <button class="btn btn-primary" type="submit">Continuar →</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

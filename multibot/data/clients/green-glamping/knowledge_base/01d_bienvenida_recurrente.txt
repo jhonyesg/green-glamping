@@ -1,0 +1,8 @@
+=== AUDIO 01d: BIENVENIDA / CLIENTE RECURRENTE ===
+ID: audio_bienvenida_recurrente
+USO: Cuando el cliente ya tiene historial de chat previo. Se detecta por variable en n8n.
+DURACIÓN APROX: 7 segundos
+
+TEXTO A GRABAR / TTS:
+"¡Hola de nuevo! Qué bueno tenerte por acá. ¿Te ayudamos a planear una nueva aventura o retomas donde lo dejamos?"
+IMPORTANTE: Decir en primera persona del equipo. Nunca decir "soy bot".

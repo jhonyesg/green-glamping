@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Media — {{ tenant }}{% endblock %}
+{% block content %}
+<style>
+  .media-card { border:1px solid #e0e0e0; border-radius:8px; padding:.6rem .8rem; background:white; }
+  .media-thumb { width:100%; height:120px; object-fit:cover; background:#f0f0f0; border-radius:6px; }
+  .media-icon { width:100%; height:120px; display:flex; align-items:center; justify-content:center; background:#f0f0f0; border-radius:6px; font-size:2rem; color:#999; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:1rem; }
+  .media-meta { font-size:.75rem; color:#666; margin-top:.3rem; }
+  .badge-inactive { opacity:.5; }
+</style>
+
+<div class="page-header">
+  <h1>Biblioteca de media</h1>
+  <p class="subtitle">
+    Tenant:
+    <select class="form-control" style="display:inline-block;width:auto;padding:.2rem .5rem"
+            onchange="location.href='/admin/media?tenant='+this.value">
+      {% for t in tenants %}
+      <option value="{{ t }}" {% if t == tenant %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+  </p>
+</div>
+
+{% if saved %}
+<div class="alert alert-success">✓ Media {{ saved }}.</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-error">⚠ Error: {{ error }}</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 2fr;gap:1.5rem">
+  <div class="card">
+    <h3>📤 Subir nuevo</h3>
+    <form method="post" action="/admin/media/upload" enctype="multipart/form-data">
+      <input type="hidden" name="tenant" value="{{ tenant }}">
+      <div class="form-group">
+        <label>Descripción</label>
+        <input class="form-control" name="descripcion" placeholder="Carta de bebidas del restaurante">
+      </div>
+      <div class="form-group">
+        <label>Archivo</label>
+        <input class="form-control" type="file" name="file" required
+               accept="image/*,audio/*,application/pdf">
+        <p class="form-hint">Máx 50 MB. Solo imágenes, audios o PDF.
+        La <b>key</b> se asigna automáticamente (ej: <code>media_001</code>);
+        podés renombrarla después en la edición.</p>
+      </div>
+      <button class="btn btn-primary" type="submit">Subir</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>🖼 Archivos ({{ media | length }})</h3>
+    {% if media %}
+    <div class="grid">
+      {% for m in media %}
+      <div class="media-card {% if not m.is_active %}badge-inactive{% endif %}">
+        {% if m.tipo == 'image' %}
+          <img class="media-thumb" src="{{ m.url }}" alt="{{ m.key }}" loading="lazy">
+        {% else %}
+          <div class="media-icon">
+            {% if m.tipo == 'audio' %}🎵{% else %}📄{% endif %}
+          </div>
+        {% endif %}
+        <div style="margin-top:.4rem">
+          <strong style="font-size:.85rem">{{ m.key }}</strong>
+          {% if not m.is_active %}<span class="badge badge-gray">inactivo</span>{% endif %}
+          <div class="media-meta">
+            <code>{{ m.mime_type }}</code><br>
+            {{ (m.size_bytes / 1024) | round(1) }} KB
+          </div>
+        </div>
+        <form method="post" action="/admin/media/{{ m.id }}/deactivate" style="margin-top:.4rem;display:inline"
+              onsubmit="return confirm('¿Desactivar este archivo? (no se borra del disco)')">
+          <input type="hidden" name="tenant" value="{{ tenant }}">
+          <button class="btn btn-secondary" style="padding:.15rem .5rem;font-size:.7rem" type="submit"
+                  title="Desactivar (soft delete — reversible)">Desactivar</button>
+        </form>
+        <form method="post" action="/admin/media/{{ m.id }}/delete" style="margin-top:.4rem;display:inline"
+              onsubmit="return confirm('⚠ ¿Eliminar DEFINITIVAMENTE este archivo del disco? No se puede recuperar.')">
+          <input type="hidden" name="tenant" value="{{ tenant }}">
+          <button class="btn btn-secondary" style="padding:.15rem .5rem;font-size:.7rem;color:#c92a2a" type="submit"
+                  title="Eliminar (hard delete — permanente)">❌</button>
+        </form>
+        <a class="btn btn-secondary" style="padding:.15rem .5rem;font-size:.7rem"
+           href="{{ m.url }}" target="_blank">Ver</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--color-text-muted)">No hay archivos todavía. Subí el primero →</p>
+    {% endif %}
+  </div>
+</div>
+
+<p class="form-hint" style="margin-top:1rem">
+  💡 Los archivos desactivados no se sirven en URLs públicas pero
+  permanecen en disco para reactivación.
+</p>
+{% endblock %}

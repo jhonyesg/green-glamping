@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Métricas — {{ tenant }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Métricas</h1>
+  <p class="subtitle">
+    Tenant: <strong>{{ tenant }}</strong> —
+    <a href="?tenant={{ tenant }}&days=7" class="{{ 'badge badge-green' if days == 7 else '' }}">7 días</a>
+    <a href="?tenant={{ tenant }}&days=30" class="{{ 'badge badge-green' if days == 30 else '' }}" style="margin-left:.5rem">30 días</a>
+    <a href="?tenant={{ tenant }}&days=90" class="{{ 'badge badge-green' if days == 90 else '' }}" style="margin-left:.5rem">90 días</a>
+  </p>
+</div>
+
+<!-- KPI cards -->
+<div class="metric-grid">
+  <div class="metric-card">
+    <div class="metric-value">{{ total_msgs }}</div>
+    <div class="metric-label">Mensajes totales</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">{{ total_convs }}</div>
+    <div class="metric-label">Conversaciones activas</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">{{ avg_latency }}ms</div>
+    <div class="metric-label">Latencia promedio (bot)</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">{{ handoff_convs }}</div>
+    <div class="metric-label">En handoff</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">{{ llm_calls }}</div>
+    <div class="metric-label">Llamadas LLM</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">
+      {{ feedback_counts.get('good', 0) }}👍 / {{ feedback_counts.get('bad', 0) }}👎
+    </div>
+    <div class="metric-label">Feedback</div>
+  </div>
+</div>
+
+<!-- Volume chart -->
+<div class="card" style="margin-bottom:1.5rem">
+  <h3>Volumen diario (últimos 14 días)</h3>
+  <canvas id="volumeChart" height="80"></canvas>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+  <!-- Top intents -->
+  <div class="card">
+    <h3>Top intents</h3>
+    {% if top_intents %}
+    <table>
+      <thead><tr><th>Intent</th><th>Mensajes</th></tr></thead>
+      <tbody>
+        {% for row in top_intents %}
+        <tr>
+          <td><code style="font-size:.8rem">{{ row.intent_name }}</code></td>
+          <td>{{ row.cnt }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--color-text-muted)">Sin datos en el período seleccionado.</p>
+    {% endif %}
+  </div>
+
+  <!-- Open feedback tickets -->
+  <div class="card">
+    <h3>Tickets pendientes ({{ open_tickets | length }})</h3>
+    {% if open_tickets %}
+    {% for t in open_tickets %}
+    <div style="border:1px solid var(--color-border);border-radius:8px;padding:.75rem;margin-bottom:.75rem">
+      <p style="font-size:.85rem;margin-bottom:.5rem">
+        <strong>#{{ t.id }}</strong> — Conv {{ t.conversation_id }}
+        <span class="badge badge-red" style="margin-left:.5rem">{{ t.ticket_type }}</span>
+      </p>
+      <p style="font-size:.8rem;color:var(--color-text-muted);margin-bottom:.5rem">
+        {{ (t.content_text or '')[:120] }}
+      </p>
+      {% if t.notes %}<p style="font-size:.8rem;margin-bottom:.5rem">Nota: {{ t.notes }}</p>{% endif %}
+      <form method="post" action="/admin/metrics/tickets/{{ t.id }}?tenant={{ tenant }}" style="display:flex;gap:.5rem">
+        <input name="action" type="hidden" value="approve">
+        <button class="btn" style="background:#e8f5e9;color:#2e7d32;padding:.3rem .7rem;font-size:.8rem" type="submit">✓ Aprobar</button>
+      </form>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p style="color:var(--color-text-muted)">Sin tickets pendientes. 🎉</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Media retention info -->
+<div class="card" style="margin-top:1.5rem">
+  <h3>Retención de media</h3>
+  <p style="font-size:.9rem;color:var(--color-text-muted)">
+    El job nocturno de retención corre automáticamente a las <strong>3 AM UTC</strong>.
+    Archivos TTS no pregenerados se marcan para quarantine después de 30 días
+    y se eliminan definitivamente 24h después.
+  </p>
+  <div style="margin-top:.75rem;font-size:.85rem">
+    <strong>Próxima limpieza:</strong>
+    <span id="next-cleanup"></span>
+  </div>
+</div>
+
+<script>
+(function() {
+  const now = new Date();
+  const next = new Date(now);
+  next.setUTCHours(3, 0, 0, 0);
+  if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+  const diffH = Math.round((next - now) / 3600000);
+  document.getElementById('next-cleanup').textContent =
+    `en ${diffH}h (${next.toUTCString()})`;
+})();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const ctx = document.getElementById('volumeChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: {{ chart_labels | tojson }},
+      datasets: [{
+        label: 'Mensajes',
+        data: {{ chart_data | tojson }},
+        backgroundColor: 'rgba(46,125,50,.7)',
+        borderColor: 'rgba(46,125,50,1)',
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+});
+</script>
+{% endblock %}

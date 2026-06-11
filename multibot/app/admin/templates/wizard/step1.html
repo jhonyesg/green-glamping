@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Nuevo tenant — Paso 1{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Nuevo tenant</h1>
+  <p class="subtitle">Configura un nuevo negocio en la plataforma</p>
+</div>
+
+<div class="wizard-steps">
+  {% for num, label in steps %}
+  <div class="wizard-step {{ 'active' if current_step == num else 'done' if current_step > num else '' }}">
+    {{ num }}. {{ label }}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card" style="max-width:600px">
+  <h3>Paso 1 — Datos del tenant</h3>
+  <form method="post" action="/admin/wizard/step/1">
+    <div class="form-group">
+      <label for="slug">Identificador (slug)</label>
+      <input class="form-control" id="slug" name="slug" type="text" required
+             pattern="[a-z0-9\-]+" placeholder="green-glamping"
+             value="{{ slug | default('') }}">
+      <p class="form-hint">Solo letras minúsculas, números y guiones. Ej: green-glamping</p>
+    </div>
+    <div class="form-group">
+      <label for="name">Nombre del negocio</label>
+      <input class="form-control" id="name" name="name" type="text" required
+             placeholder="Green Glamping Chipaque"
+             value="{{ name | default('') }}">
+    </div>
+    <div class="form-group">
+      <label for="contact_email">Email de contacto (opcional)</label>
+      <input class="form-control" id="contact_email" name="contact_email" type="email"
+             placeholder="admin@negocio.co"
+             value="{{ contact_email | default('') }}">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Continuar →</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

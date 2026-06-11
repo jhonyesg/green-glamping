@@ -1,0 +1,352 @@
+{
+  "tenant_slug": "green-glamping",
+  "tenant_name": "Green Glamping Chipaque",
+  "operation_mode": "autonomous",
+  "intents": [
+    {
+      "intent_name": "saludo_puro",
+      "keywords_regex": "^hola$|^buen[oa]s?\\s*(d[ií]as?|tardes?|noches?)$|^qu[eé]\\s*tal$|^buenas?$|^hola!+$",
+      "response_text": "¡Hola! 👋 Bienvenido/a a *Green Glamping Chipaque* y *Parapente Volando con Tatán* 🌿🪂\n\n¿En qué te podemos ayudar?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 10
+    },
+    {
+      "intent_name": "info_servicios",
+      "keywords_regex": "servicio|combo|ofrece|qu[eé]\\s*hay|qu[eé]\\s*tienen|tienen\\s*spa|qu[eé]\\s*planes|qu[eé]\\s*ofrecen|muestr|portafolio",
+      "response_text": "Vive una experiencia única llena de aventura y descanso 🏕️\n\nOfrecemos:\n🪂 *Parapente* biplaza con piloto certificado\n🏕️ *Glamping Montaña* (guadua con chimenea)\n💎 *Glamping Cristal* (transparente 360°)\n🐎 *Cabalgatas*\n🚙 *Recorridos Cars 4x4*\n💆 *Spa en pareja con jacuzzi*\n\n¿Cuál te llama la atención?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "precio_general",
+      "keywords_regex": "cu[aá]nto\\s*(cuesta|vale|es)|precio|valor|cuesta|tarifa|lista\\s*de\\s*precios|valores",
+      "response_text": "💰 *Nuestros precios (reserva):*\n• Solo vuelo / cumple / aniversario: $30.000\n• Glamping + Parapente: $200.000\n• Combos 1-7: $160.000\n• Combo 5 (glamping+parapente+spa): $290.000\n• Parapente individual: $220.000\n• Spa pareja: $130.000\n\nLos precios del catálogo ya son los mínimos posibles, no manejamos descuentos 😊\n\n¿Cuál te interesa?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 8
+    },
+    {
+      "intent_name": "horarios",
+      "keywords_regex": "horario|check.?in|check.?out|a\\s*qu[eé]\\s*hora|atienden|abren|qu[eé]\\s*hora|hasta\\s*qu[eé]\\s*hora",
+      "response_text": "📅 *Horarios:*\n\n🏕️ *Hospedaje Glamping:*\n• Check-in: a partir de las *3:00 p.m.*\n• Check-out: hasta las *12:00 m.*\n\n🪂 *Parapente:*\n• Ingreso desde las *10:00 a.m.*\n• Recomendamos disponibilidad todo el día\n• *Último vuelo: 6:30 p.m.*\n\n📆 *Atendemos todos los días*",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "ubicacion",
+      "keywords_regex": "d[oó]nde\\s*est[aá]n|d[oó]nde\\s*quedan|ubicaci[oó]n|c[oó]mo\\s*llego|direcci[oó]n|quedan\\s*lejos|como\\s*llegar|tan\\s*lejos|lejos\\s*del\\s*pueblo",
+      "response_text": "📍 Estamos en *Chipaque, Cundinamarca*, a 20 min del pueblo 🏔️\n\nPuedes llegar:\n🚗 En carro o moto propio\n🚌 Transporte público desde Bogotá\n🚐 Nuestro servicio de transporte: *$60.000 COP por pareja* (ida y regreso desde el municipio de Chipaque)\n\nTambién contamos con el *Telecable*: cabina tipo teleférico con vista 360° al aire libre 🚡",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "como_reservar",
+      "keywords_regex": "[ck][oó]mo\\s*reserv|[ck][oó]mo\\s*apart|abonar|con\\s*cu[aá]nto|[ck][oó]mo\\s*funciona\\s*la\\s*reserva|quiero\\s*reservar|quiero\\s*apartar",
+      "response_text": "Para apartar tu lugar necesitas:\n\n📋 Nombre completo · Cédula · Teléfono\n📅 Fecha y combo elegido\n💳 Comprobante de pago de la reserva\n\n¿Quieres que te pase con mi compañera para cerrar la reserva? 🙌",
+      "handoff_rule": "H01",
+      "requires_human": true,
+      "human_reason": "Cliente quiere reservar — necesita atención humana para cerrar",
+      "priority": 8
+    },
+    {
+      "intent_name": "datos_pago",
+      "keywords_regex": "datos?\\s*de\\s*pago|nequi|daviplata|llave|cuenta|titular|dat[aá]fono|tarjeta|pse|bold|a\\s*nombre\\s*de|n[uú]mero\\s*de\\s*cuenta",
+      "response_text": "💳 *Titular:* Jonathan Eliécer García · C.C. 80.845.317\n\n💚 Nequi / Daviplata / Llave: *3124436880*\n🏦 Davivienda Ahorros: *488400301062*\n🏦 BBVA Ahorros: *0079209995*\n\n🔗 *Bold / Link* (PSE, tarjeta): comisión 6%",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 7
+    },
+    {
+      "intent_name": "seleccion_combo",
+      "keywords_regex": "combo\\s*[1-9]|paquete|glampin[g]?\\s*monta[ñn]a|glampin[g]?\\s*cristal|glampin[g]?$|^glampin[g]?\\s|peti|penti|kars|cars\\s*4x4|t[eé]\\s*interesa|cu[aá]l\\s*me\\s*recomiendas|quiero\\s*el\\s*combo|me\\s*interesa\\s*el|plan\\s*pasad[ií]a",
+      "response_text": "¡Excelente elección! 🙌\n\nTenemos dos Glamping:\n🏕️ *Montaña* — guadua con chimenea, cálido y natural\n💎 *Cristal* — 100% transparente, vista 360°\n\nAmbos tienen capacidad para 2 personas mayores de edad, baño seco (ecológico) y vista espectacular.\n\n*Si buscas sensación de cabaña rústica*: el Glamping Montaña (hecho en guadua) es tu opción.\n\n¿Para qué fecha lo necesitas? 📅",
+      "handoff_rule": "H01",
+      "requires_human": false,
+      "priority": 7
+    },
+    {
+      "intent_name": "diferencia_glamping",
+      "keywords_regex": "diferencia.*glamping|diferencia.*entre|cu[aá]l\\s*(es\\s*)?mejor|cu[aá]l\\s*elijo|monta[ñn]a\\s*o\\s*cristal|cristal\\s*o\\s*monta[ñn]a",
+      "response_text": "🏕️ *Glamping Montaña:*\nDiseño tipo cabaña en guadua, ideal para disfrutar de una experiencia cálida y natural, con hermosa vista. Baño seco.\n\n💎 *Glamping Cristal:*\nEspectacular diseño 100% en cristal, perfecto para increíble vista panorámica 360°. Baño seco.\n\nAmbos: capacidad 2 personas, vistas, naturaleza. La diferencia es el material y la experiencia: rústica-cálida vs moderna-panorámica. ✨\n\n¿Cuál te llama más?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "capacidad_glamping",
+      "keywords_regex": "cu[aá]ntas\\s*personas|capacidad|caben|para\\s*cu[aá]ntos|cabemos|cu[aá]ntas\\s*caben",
+      "response_text": "Nuestro hospedaje Glamping tiene *capacidad máxima para 2 personas mayores de edad* 👥",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "menores_bebes",
+      "keywords_regex": "beb[eé]|ni[ñn]o|menor|hijo|hija|familia|con\\s*mi\\s*hijo|con\\s*mi\\s*beb[eé]|menores\\s*de\\s*edad",
+      "response_text": "👶 *Sobre menores de edad:*\n\n*En hospedaje Glamping:* ❌ NO está permitido el ingreso de menores.\n\n*En planes pasadía con parapente:* ✅ Sí pueden asistir niños.\n\n*Importante:* para la actividad de vuelo, los menores deben asistir con su acudiente o representante legal. Edad mínima: *4 años*.\n\n¿Te interesa plan pasadía o hospedaje?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "mascotas",
+      "keywords_regex": "mascota|perro|gato|pet\\s*friendly|animal|llevar.*perro|traer.*mascota",
+      "response_text": "🐾 *Sobre mascotas:*\n\n*En hospedaje Glamping:* ❌ NO están permitidas.\n\n*En planes pasadía / vuelo en parapente:* ✅ Sí puedes traerla.\n\n*En el restaurante:* ❌ No permitidas, pero hay zona balcón pet friendly mientras esperas el servicio.\n\n¿Qué tipo de plan te interesa?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "comida_externa",
+      "keywords_regex": "comida\\s*externa|licor|torta|cumplea[ñn]o|dj|m[uú]sica\\s*en\\s*vivo|mariachi|open\\s*bar|decoraci[oó]n|video.*profesional|drone",
+      "response_text": "🎉 Para ofrecerte la mejor experiencia, contamos con *servicio de restaurante* dentro de las instalaciones. Por eso *no se permite el ingreso de bebidas ni alimentos externos* 🚫\n\nPara tortas, decoración, música en vivo o DJ → te paso con mi compañera para evaluar la opción 🙌",
+      "handoff_rule": "H05",
+      "requires_human": true,
+      "human_reason": "Cliente pide servicio especial no catalogado",
+      "priority": 6
+    },
+    {
+      "intent_name": "cancelacion",
+      "keywords_regex": "cancel|cambiar\\s*fecha|cambio\\s*de\\s*fecha|no\\s*puedo\\s*ir|reprogramar|cambiar\\s*la\\s*fecha|cambia\\s*mi|no\\s*puedo\\s*asistir",
+      "response_text": "📅 *Política de cambios:*\n\n*Glamping:* cambios con *mínimo 15 días* de anticipación.\n*Parapente:* cambios con *mínimo 2 días* de anticipación.\n\nFuera de estos tiempos no se pueden procesar.\n\nNo hay devolución de dinero.\n\n¿Quieres que te conecte con mi compañera para revisar tu caso?",
+      "handoff_rule": "H01",
+      "requires_human": true,
+      "human_reason": "Solicitud de cancelación/reprogramación",
+      "priority": 8
+    },
+    {
+      "intent_name": "clima_lluvia",
+      "keywords_regex": "llueve|lluvia|clima|mal\\s*tiempo|tormenta|si\\s*llueve|en\\s*caso\\s*de\\s*lluvia",
+      "response_text": "🌧️ *Sobre el clima:*\n\nSi por condiciones climáticas no es posible volar, las actividades se *reprograman* para nueva fecha.\n\n*Importante:* las reservas de Glamping *NO* se ven afectadas por el clima, mantienen su programación normal.\n\n¿Te gustaría apartar una fecha?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "transporte",
+      "keywords_regex": "transporte|recogen|llevan|c[oó]mo\\s*llegar\\s*desde|desde\\s*bogot|servicio\\s*de\\s*transporte",
+      "response_text": "🚐 *Servicio de transporte:*\n\nOfrecemos transporte desde el municipio de *Chipaque* hasta nuestras instalaciones.\n\n💰 *Valor:* $60.000 COP por pareja (ida y regreso)\n\nTambién:\n🚗 Puedes venir en carro o moto propio\n🚌 Transporte público desde Bogotá\n🚡 *Telecable*: cabina tipo teleférico con vista 360° al aire libre\n\n¿Cuál te conviene?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "parqueadero",
+      "keywords_regex": "parqueadero|parqueo|estacionamiento|dejar\\s*el\\s*carro|donde\\s*dejo|donde\\s*parqueo",
+      "response_text": "🅿️ *Sí, contamos con parqueadero.*\n\n*Si llegas por la vía peatonal:*\n🏍️ Moto: $5.000 COP\n🚗 Carro: $8.000 COP\n\n*Si llegas por el Telecable:* ¡el parqueadero es *gratis*! 🎉",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "restaurante",
+      "keywords_regex": "restaurante|comida\\s*en\\s*el\\s*sitio|men[uú]|carta|comida\\s*all[ií]|tienen\\s*comida|qu[eé]\\s*comen",
+      "response_text": "🍽️ ¡Claro! En nuestras instalaciones contamos con *servicio de restaurante* con variedad de bebidas y alimentos.\n\n*Importante:* NO se permite ingreso de bebidas externas.\n\nRecuerda que el combo 5 y algunos hospedajes incluyen carta hasta $20.000 por persona 🍴",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "wifi",
+      "keywords_regex": "wifi|wi-fi|se[ñn]al|internet|hay\\s*wifi|tienen\\s*wifi",
+      "response_text": "📶 Sí, contamos con WiFi en las instalaciones.\n\n⚠️ Estamos en la punta de la montaña más alta del oriente de Cundinamarca, así que cuando hay nube baja la señal puede ser inestable. Es parte de la experiencia de *desconexión y conexión con la naturaleza* 🌄",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "spa_jacuzzi",
+      "keywords_regex": "jacuzzi|spa|hidromasaje|relajaci[oó]n|tienen\\s*spa|qu[eé]\\s*incluye\\s*el\\s*spa",
+      "response_text": "💆 Sí, puedes mejorar tu experiencia agregando el *servicio de spa en pareja con jacuzzi* por un costo adicional.\n\n✨ Además, por ser huésped accedes a una *súper oferta promocional exclusiva* 💚\n\n¿Para cuándo lo quieres?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "duracion_actividades",
+      "keywords_regex": "dura|duraci[oó]n|cu[aá]nto\\s*tiempo|tiempo\\s*de\\s*vuelo|cu[aá]nto\\s*se\\s*demora",
+      "response_text": "⏱️ *Duración de actividades:*\n\n🪂 *Vuelo en parapente:* 10-20 min aprox\n🐎 *Cabalgatas:* 40-60 min aprox\n🚙 *Cars 4x4:* 40-60 min aprox\n💆 *Spa:* 1 hora aprox\n\nPara parapente, el último vuelo es 6:30 p.m. 🌅",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "contraindicaciones_parapente",
+      "keywords_regex": "embaraz|contraindica|problema.*columna|card[ií]aco|100\\s*kg|es\\s*seguro|riesgo|me\\s*pasa\\s*algo|puedo\\s*volar\\s*si",
+      "response_text": "⚠️ *Contraindicaciones del parapente:*\n\n❌ No estar en estado de embarazo\n❌ No tener problemas de columna\n❌ No tener problemas cardíacos\n❌ No superar los *100 kg* de peso\n\n✅ Desde los *4 años* con tutor o representante legal.\n\nActividad tándem: 1 piloto certificado + 1 pasajero. Licencia vigente de la Aeronáutica Civil ✈️\n\n¿Tienes alguna duda específica?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "edad_volar",
+      "keywords_regex": "desde\\s*qu[eé]\\s*edad|edad\\s*m[ií]nima|puede\\s*volar|ni[ñn]o.*volar|volar.*ni[ñn]o",
+      "response_text": "🪂 La actividad de vuelo se puede realizar *desde los 4 años* de edad, siempre y cuando el menor asista con su tutor o representante legal.\n\nActividad en modalidad tándem (1 piloto + 1 pasajero).",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "telecable",
+      "keywords_regex": "telecable|telef[eé]rico|cabina|c[oó]mo\\s*subo|como\\s*se\\s*llega|c[oó]mo\\s*llego\\s*por",
+      "response_text": "🚡 El *Telecable* es nuestro servicio de transporte a las instalaciones.\n\nEs una *cabina tipo teleférico*, completamente al aire libre, con una *espectacular vista de 360°* durante el recorrido 🌄\n\n*Bonus:* si llegas por Telecable, ¡el parqueadero es *gratis*! 🅿️✨",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "bano_seco",
+      "keywords_regex": "ba[ñn]o\\s*seco|ba[ñn]o\\s*ecol[oó]gico|servicio.*ba[ñn]o|qu[eé]\\s*es\\s*el\\s*ba[ñn]o",
+      "response_text": "🚽 El *baño seco* es un tipo de baño *ecológico* que no usa agua, sino material secante.\n\nEstá disponible en nuestras instalaciones bajo la modalidad de *Glamping Montaña* 🌿",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "es_empresa_real",
+      "keywords_regex": "es\\s*real|son\\s*empresa|papeles|leg[ií]timo|existen|confianza|desconfianza|estafa|es\\s*fiable|son\\s*confiables",
+      "response_text": "💚 ¡Entendemos tu desconfianza!\n\n1. 📱 Síguenos en nuestras redes sociales donde verás las experiencias de muchas personas\n2. 📜 Contamos con *licencia de turismo registrada bajo el No. 219365* — respalda la legalidad y confianza\n3. 🪂 Todos nuestros pilotos tienen *licencia vigente* de la Aeronáutica Civil\n\n¿Te gustaría reservar con total tranquilidad?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 5
+    },
+    {
+      "intent_name": "despedida",
+      "keywords_regex": "^gracias$|muchas\\s*gracias|^chao$|adi[oó]s|hasta\\s*luego|^listo$|fue\\s*un\\s*gusto|hasta\\s*pronto",
+      "response_text": "¡Hasta pronto! 🌿\n\nFue un gusto atenderte. Te esperamos pronto en *Green Glamping Chipaque* ✨\n\nSi necesitas algo más, escríbenos cuando quieras 💚",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 10
+    },
+    {
+      "intent_name": "hablar_humano",
+      "keywords_regex": "hablar\\s*con\\s*(una\\s*)?persona|hablar\\s*con\\s*alguien|asesor\\s*real|que\\s*me\\s*llamen|atenci[oó]n\\s*personalizada|otro\\s*n[uú]mero|tel[eé]fono\\s*fijo|l[ií]nea\\s*de\\s*atenci[oó]n|sucursal|me\\s*comunicas|me\\s*pasas\\s*con",
+      "response_text": "¡Perfecto! Ya te paso con mi compañera 🙌\n\nEn un momento ella te escribe por este mismo chat. Mientras tanto, ¿hay algo más en lo que te pueda ayudar?",
+      "handoff_rule": "H02",
+      "requires_human": true,
+      "human_reason": "Cliente solicita atención humana directa",
+      "priority": 9
+    },
+    {
+      "intent_name": "queja",
+      "keywords_regex": "p[eé]simo|queja|reclamo|estafa|robo|fraude|molesto|enojado|no\\s*me\\s*contestaron|mal\\s*servicio|fui\\s*mal",
+      "response_text": "Entendemos tu molestia y queremos solucionarlo lo antes posible 🙏\n\nTe conectamos de inmediato con la persona encargada. Te contactamos en breve.",
+      "handoff_rule": "H03",
+      "requires_human": true,
+      "human_reason": "Queja o reclamo — requiere atención inmediata",
+      "priority": 10
+    },
+    {
+      "intent_name": "objecion_descuento",
+      "keywords_regex": "descuento|rebaja|m[aá]s\\s*barato|precio\\s*especial|oferta|promo|cup[oó]n|tiene\\s*descuento",
+      "response_text": "Los precios del catálogo ya son los mínimos posibles, incluyen todo lo descrito en el portafolio. No manejamos descuentos sobre los combos publicados 😊",
+      "handoff_rule": "H04",
+      "requires_human": false,
+      "priority": 7
+    },
+    {
+      "intent_name": "objecion_quitar_servicio",
+      "keywords_regex": "sin\\s*spa|sin\\s*parapente|quitar\\s*el|solo\\s*glamping|solo\\s*vuelo|quitar\\s*un\\s*servicio",
+      "response_text": "El precio del combo incluye los servicios tal como están publicados. Si deseas un combo diferente, te puedo mostrar las opciones del catálogo, pero los precios son fijos por combo 🙌",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 6
+    },
+    {
+      "intent_name": "objecion_comparacion",
+      "keywords_regex": "en\\s*otro\\s*lugar|m[aá]s\\s*barato\\s*en|competencia|otros\\s*ofrecen|vi\\s*en\\s*otra\\s*p[aá]gina|en\\s*otro\\s*sitio",
+      "response_text": "Entiendo. Cada lugar maneja sus precios. Lo que te ofrecemos incluye Glamping, parapente con piloto certificado, spa, cabalgatas, kars 4x4 y vistas 360° con todas las medidas de seguridad (licencia 219365, pilotos certificados) 😊\n\n¿Quieres que te comparta el portafolio para comparar lo que incluyes?",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 6
+    },
+    {
+      "intent_name": "objecion_presupuesto",
+      "keywords_regex": "ajustado|no\\s*me\\s*alcanza|estoy\\s*corto|presupuesto|caro\\s*para\\s*m[ií]|me\\s*queda\\s*caro|muy\\s*caro",
+      "response_text": "Te entiendo. Si quieres, puedo mostrarte las opciones de menor valor: *Solo vuelo / cumple / aniversario: $30.000 reserva* o *Spa pareja: $30.000 reserva*. También puedes separar la fecha para más adelante 😊",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 6
+    },
+    {
+      "intent_name": "disponibilidad",
+      "keywords_regex": "disponib|hay\\s*(cupo|campo|espacio|agenda)|tienen\\s*(cupo|espacio|agenda)|\\d{1,2}\\s*(de\\s*)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)|fecha\\s*(libre|disponible)|agendar\\s*para|para\\s*(este|el\\s*pr[oó]ximo)\\s*(fin|s[aá]bado|domingo|viernes)",
+      "response_text": "¡Hola! 😊 ¡Claro que sí! Con gusto te ayudamos.\n\n💰 *Precios para que tengas de una vez:*\n• Parapente individual: $220.000\n• Glamping + Parapente: $200.000 (reserva)\n• Combo 5 (glamping+parapente+spa): $290.000\n• Reserva solo vuelo: $30.000\n\n📅 Para confirmarte la *disponibilidad de tu fecha*, cuéntame:\n1. Fecha exacta\n2. Cuántas personas\n3. Qué combo te interesa\n\nY enseguida te confirmo el cupo 🪂",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 8
+    },
+    {
+      "intent_name": "interes_parapente",
+      "keywords_regex": "(quiero|quisiera|me\\s*gustar[ií]a|deseo|antojado|vamos\\s*a)\\s*(hacer|volar|probar|vivir)\\s*(el\\s*)?parapente|volar\\s*en\\s*parapente|hacer\\s*parapente|^parapente\\??$",
+      "response_text": "🪂 ¡Excelente elección! El vuelo en parapente en Chipaque es una experiencia inolvidable con vista espectacular.\n\n💰 *Precios:*\n• Parapente individual: $220.000\n• Glamping + Parapente: $200.000 (reserva)\n• Solo reserva de vuelo: $30.000\n\n📅 ¿Para qué fecha te gustaría? Te confirmo disponibilidad de inmediato 😊",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 6
+    },
+    {
+      "intent_name": "mas_informacion",
+      "keywords_regex": "m[aá]s\\s*info|quiero\\s*info|informaci[oó]n\\s*(por\\s*favor|porfa)?|me\\s*interesa(n)?\\s*(saber|conocer)?|quiero\\s*saber\\s*m[aá]s|me\\s*puede[ns]?\\s*(dar|enviar|mandar)\\s*(el\\s*|la\\s*)?(info|cat[aá]logo|portafolio)|env[ií]a(r|me)?\\s*(el\\s*|la\\s*)?(cat[aá]logo|portafolio|info)|v[ií]\\s*(el|su|tu|un)\\s*anuncio|vengo\\s*de\\s*(face|insta|tiktok|publicidad)|los\\s*vi\\s*en",
+      "response_text": "¡Hola! 👋 Qué alegría que nos escribas 🌿 Con gusto te comparto nuestro portafolio:\n\n🪂 *Parapente* biplaza con piloto certificado y video del vuelo\n🏕️ *Glamping Montaña* — cabaña de guadua con chimenea\n💎 *Glamping Cristal* — domo transparente con vista 360°\n💆 *Spa*, cenas románticas, decoración de cumpleaños y aniversarios\n\n💰 *Precios (reserva):*\n• Solo vuelo / cumple / aniversario: $30.000\n• Glamping + Parapente: $200.000\n• Combos 1-7: $160.000\n• Combo 5 (glamping + parapente + spa): $290.000\n\nCuéntame: ¿para qué fecha y cuántas personas sería? Así te confirmo disponibilidad de una vez 😊",
+      "handoff_rule": null,
+      "requires_human": false,
+      "priority": 9
+    }
+  ],
+  "handoff_rules": [
+    {
+      "rule_code": "H01",
+      "mode": "autonomous",
+      "trigger_intent": "como_reservar,seleccion_combo,cancelacion,tarjeta_invitacion",
+      "notify_channel": "telegram",
+      "notify_target": "",
+      "custom_message": "Cliente listo para reservar — se necesita atención humana",
+      "is_active": true,
+      "priority": 1
+    },
+    {
+      "rule_code": "H02",
+      "mode": "autonomous",
+      "trigger_intent": "hablar_humano",
+      "notify_channel": "telegram",
+      "notify_target": "",
+      "custom_message": "Cliente solicita hablar con una persona",
+      "is_active": true,
+      "priority": 1
+    },
+    {
+      "rule_code": "H03",
+      "mode": "autonomous",
+      "trigger_intent": "queja",
+      "notify_channel": "telegram",
+      "notify_target": "",
+      "custom_message": "QUEJA: cliente reporta un problema — atención urgente",
+      "is_active": true,
+      "priority": 1
+    },
+    {
+      "rule_code": "H04",
+      "mode": "autonomous",
+      "trigger_intent": "objecion_descuento",
+      "notify_channel": "telegram",
+      "notify_target": "",
+      "custom_message": "Cliente pide descuento",
+      "is_active": true,
+      "priority": 2
+    },
+    {
+      "rule_code": "H05",
+      "mode": "autonomous",
+      "trigger_intent": "comida_externa",
+      "notify_channel": "telegram",
+      "notify_target": "",
+      "custom_message": "Cliente pide servicio especial (DJ, torta, decoración)",
+      "is_active": true,
+      "priority": 2
+    }
+  ]
+}

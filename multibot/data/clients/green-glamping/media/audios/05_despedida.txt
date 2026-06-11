@@ -1,0 +1,8 @@
+=== AUDIO 05: DESPEDIDA / CIERRE ===
+ID: audio_despedida
+USO: Cuando el cliente dice "gracias", "listo", "ok", "perfecto", antes de cerrar
+DURACIÓN APROX: 5 segundos
+IMPORTANTE: Decir en primera persona. Nunca decir "soy bot" ni "asistente virtual".
+
+TEXTO A GRABAR / TTS:
+"Con gusto, fue un placer atenderte. Te esperamos pronto en Green Glamping Chipaque. ¡Que tengas un excelente día!"

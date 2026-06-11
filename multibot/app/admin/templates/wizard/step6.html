@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Nuevo tenant — Paso 6{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Nuevo tenant</h1></div>
+
+<div class="wizard-steps">
+  {% for num, label in steps %}
+  <div class="wizard-step {{ 'active' if current_step == num else 'done' if current_step > num else '' }}">
+    {{ num }}. {{ label }}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card" style="max-width:700px">
+  <h3>Paso 6 — Resumen y confirmación</h3>
+  <table style="margin-bottom:1.5rem">
+    <tr><th style="width:180px">Slug</th><td><code>{{ slug }}</code></td></tr>
+    <tr><th>Nombre</th><td>{{ name }}</td></tr>
+    <tr><th>Modo</th><td><span class="badge badge-green">{{ operation_mode }}</span></td></tr>
+    <tr><th>Canal</th><td>{{ channel_type }}</td></tr>
+    <tr><th>Pausa corta</th><td>{{ short_pause_hours }}h</td></tr>
+    <tr><th>Pausa larga</th><td>{{ long_pause_hours }}h</td></tr>
+  </table>
+
+  <div class="alert alert-info" style="margin-bottom:1rem">
+    Al confirmar, se creará el schema <code>tenant_{{ slug }}</code> en la base de datos,
+    se insertará el tenant en <code>public.tenants</code>, y se creará el
+    <strong>usuario de acceso para el cliente</strong>.
+  </div>
+
+  <form method="post" action="/admin/wizard/step/6">
+    <h4 style="margin-bottom:.75rem">Acceso del cliente al panel</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div class="form-group">
+        <label for="client_username">Usuario del cliente</label>
+        <input class="form-control" id="client_username" name="client_username"
+               pattern="[a-z0-9\-_.]+" value="{{ slug | replace('-', '') }}">
+      </div>
+      <div class="form-group">
+        <label for="client_password">Contraseña del cliente</label>
+        <input class="form-control" id="client_password" name="client_password"
+               minlength="8" placeholder="Mínimo 8 caracteres" required>
+      </div>
+    </div>
+    <input type="hidden" name="slug" value="{{ slug }}">
+    <input type="hidden" name="name" value="{{ name }}">
+    <input type="hidden" name="operation_mode" value="{{ operation_mode }}">
+    <input type="hidden" name="channel_type" value="{{ channel_type }}">
+    <input type="hidden" name="bot_token" value="{{ bot_token }}">
+    <input type="hidden" name="short_pause_hours" value="{{ short_pause_hours }}">
+    <input type="hidden" name="long_pause_hours" value="{{ long_pause_hours }}">
+    <input type="hidden" name="welcome_message" value="{{ welcome_message | default('') }}">
+
+    <div class="form-actions">
+      <a href="/admin/wizard" class="btn btn-secondary">← Atrás</a>
+      <button class="btn btn-primary" type="submit">Crear tenant ✓</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

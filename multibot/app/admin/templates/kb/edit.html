@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if intent else 'Nuevo' }} intent{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>{{ 'Editar intent' if intent else 'Nuevo intent' }}</h1>
+  <p class="subtitle">Tenant: <strong>{{ tenant }}</strong></p>
+</div>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<div class="card" style="max-width:700px">
+  <form method="post" action="{{ action }}">
+    <div class="form-group">
+      <label for="intent_name">Nombre del intent</label>
+      <input class="form-control" id="intent_name" name="intent_name" type="text" required
+             placeholder="como_reservar"
+             value="{{ intent.intent_name if intent else '' }}">
+      <p class="form-hint">snake_case, único por tenant</p>
+    </div>
+
+    <div class="form-group">
+      <label for="keywords_regex">Regex de palabras clave</label>
+      <input class="form-control" id="keywords_regex" name="keywords_regex" type="text" required
+             placeholder="reser(v|b)|como.*reserv|quiero.*apartar"
+             value="{{ intent.keywords_regex if intent else '' }}">
+      <p class="form-hint">Expresión regular Python (IGNORECASE). Separar alternativas con |</p>
+    </div>
+
+    <div class="form-group">
+      <label for="response_text">Texto de respuesta</label>
+      <textarea class="form-control" id="response_text" name="response_text" rows="6" required
+                placeholder="Para reservar, escríbenos tu nombre completo, fecha y combo...">{{ intent.response_text if intent else '' }}</textarea>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group">
+        <label for="priority">Prioridad (1-10)</label>
+        <input class="form-control" id="priority" name="priority" type="number" min="1" max="10"
+               value="{{ intent.priority if intent else 5 }}">
+        <p class="form-hint">Mayor número = mayor prioridad en empates</p>
+      </div>
+      <div class="form-group">
+        <label for="status">Estado</label>
+        <select class="form-control" id="status" name="status">
+          <option value="active" {% if not intent or intent.status == 'active' %}selected{% endif %}>Activo</option>
+          <option value="draft" {% if intent and intent.status == 'draft' %}selected{% endif %}>Borrador</option>
+          <option value="pending_approval" {% if intent and intent.status == 'pending_approval' %}selected{% endif %}>Pendiente aprobación</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input type="checkbox" name="requires_human" value="true"
+               {% if intent and intent.requires_human %}checked{% endif %}>
+        Requiere atención humana (handoff)
+      </label>
+    </div>
+
+    <div class="form-group" id="handoff-field">
+      <label for="handoff_rule">Código de regla de handoff</label>
+      <input class="form-control" id="handoff_rule" name="handoff_rule" type="text"
+             placeholder="H01"
+             value="{{ intent.handoff_rule if intent and intent.handoff_rule else '' }}">
+      <p class="form-hint">Ej: H01. Debe existir en la tabla handoff_rules del tenant.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="response_media_ids">🖼 Media adjuntos a esta respuesta</label>
+      <select class="form-control" id="response_media_ids" name="response_media_ids" multiple
+              size="6" style="height:auto">
+        {% if not media_options %}
+          <option value="" disabled>No hay media en la biblioteca todavía. Subí archivos en Media.</option>
+        {% endif %}
+        {% for m in media_options %}
+        <option value="{{ m.id }}" {% if m.id in selected_media_ids %}selected{% endif %}>
+          {% if m.tipo == 'image' %}🖼{% elif m.tipo == 'audio' %}🎵{% else %}📄{% endif %}
+          {{ m.key }} ({{ m.mime_type }}{% if m.descripcion %} — {{ m.descripcion }}{% endif %})
+        </option>
+        {% endfor %}
+      </select>
+      <p class="form-hint">
+        Mantené Ctrl/Cmd presionado para seleccionar varios. Se adjuntan al
+        mensaje del bot cuando este intent matchea. Para agregar archivos,
+        primero subilos en
+        <a href="/admin/media?tenant={{ tenant }}">Media</a>.
+      </p>
+    </div>
+
+    <div class="form-actions">
+      <a href="/admin/kb?tenant={{ tenant }}" class="btn btn-secondary">Cancelar</a>
+      <button class="btn btn-primary" type="submit">
+        {{ 'Guardar cambios' if intent else 'Crear intent' }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

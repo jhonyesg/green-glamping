@@ -1,0 +1,38 @@
+services:
+  evolution-api:
+    image: atendai/evolution-api:v2.1.1
+    container_name: evolution_api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file: .env
+    volumes:
+      - evolution_instances:/evolution/instances
+    depends_on:
+      - evolution-redis
+      - evolution-postgres
+
+  evolution-redis:
+    image: redis:7-alpine
+    container_name: evolution_redis
+    restart: unless-stopped
+    command: redis-server --port 6380
+    ports:
+      - "6380:6380"
+
+  evolution-postgres:
+    image: postgres:15-alpine
+    container_name: evolution_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: evolution123
+      POSTGRES_DB: evolution
+    ports:
+      - "5433:5432"
+    volumes:
+      - evolution_pgdata:/var/lib/postgresql/data
+
+volumes:
+  evolution_instances:
+  evolution_pgdata:

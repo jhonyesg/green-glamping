@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Nuevo tenant — Paso 2{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Nuevo tenant</h1>
+</div>
+
+<div class="wizard-steps">
+  {% for num, label in steps %}
+  <div class="wizard-step {{ 'active' if current_step == num else 'done' if current_step > num else '' }}">
+    {{ num }}. {{ label }}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card" style="max-width:800px">
+  <h3>Paso 2 — Modo de operación</h3>
+  <p style="color:var(--color-text-muted);margin-bottom:1rem">
+    Elige cómo el bot interactuará con los clientes:
+  </p>
+
+  <form method="post" action="/admin/wizard/step/2">
+    <input type="hidden" name="slug" value="{{ slug }}">
+    <input type="hidden" name="name" value="{{ name }}">
+
+    <div class="mode-cards">
+      {% for mode, flow in mode_flows.items() %}
+      <label class="mode-card" id="card-{{ mode }}">
+        <input type="radio" name="operation_mode" value="{{ mode }}"
+               style="display:none"
+               {% if loop.first %}checked{% endif %}
+               onchange="selectMode('{{ mode }}')">
+        <h4>{{ mode | title }}</h4>
+        <p style="font-size:.8rem;color:var(--color-text-muted);margin-bottom:.5rem">
+          {% if mode == 'autonomous' %}Bot maneja todo el flujo sin intervención humana.
+          {% elif mode == 'assisted' %}Bot clasifica, humano aprueba antes de responder.
+          {% else %}Bot responde temas simples; humano toma casos complejos.{% endif %}
+        </p>
+        <pre>{{ flow }}</pre>
+      </label>
+      {% endfor %}
+    </div>
+
+    <div class="form-actions">
+      <a href="/admin/wizard" class="btn btn-secondary">← Atrás</a>
+      <button class="btn btn-primary" type="submit">Continuar →</button>
+    </div>
+  </form>
+</div>
+
+<script>
+function selectMode(mode) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('card-' + mode).classList.add('selected');
+}
+document.addEventListener('DOMContentLoaded', () => selectMode('autonomous'));
+</script>
+{% endblock %}

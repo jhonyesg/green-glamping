@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Conversaciones — {{ tenant }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Conversaciones</h1>
+  <p class="subtitle">Tenant: <strong>{{ tenant }}</strong> — {{ total }} conversaciones</p>
+</div>
+
+<form method="get" action="/admin/conversations" style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+  <input type="hidden" name="tenant" value="{{ tenant }}">
+  <select class="form-control" name="state" style="max-width:200px" onchange="this.form.submit()">
+    <option value="">Todos los estados</option>
+    <option value="active" {% if state == 'active' %}selected{% endif %}>Activo</option>
+    <option value="in_handoff" {% if state == 'in_handoff' %}selected{% endif %}>En handoff</option>
+    <option value="confirmed" {% if state == 'confirmed' %}selected{% endif %}>Confirmado</option>
+    <option value="closed" {% if state == 'closed' %}selected{% endif %}>Cerrado</option>
+  </select>
+</form>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Cliente</th>
+        <th>Thread</th>
+        <th>Estado</th>
+        <th>Modo</th>
+        <th>Último mensaje</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in conversations %}
+      <tr>
+        <td>{{ c.id }}</td>
+        <td>{{ c.push_name or '—' }}</td>
+        <td><code style="font-size:.8rem">{{ c.external_thread_id[:16] }}...</code></td>
+        <td>
+          <span class="badge
+            {{ 'badge-green' if c.state == 'active' else
+               'badge-orange' if c.state == 'in_handoff' else
+               'badge-blue' if c.state == 'confirmed' else
+               'badge-gray' }}">
+            {{ c.state }}
+          </span>
+          {% if c.in_handoff %}<span class="badge badge-red" style="margin-left:.25rem">handoff</span>{% endif %}
+        </td>
+        <td><span class="badge badge-gray">{{ c.operation_mode_snapshot or '—' }}</span></td>
+        <td style="font-size:.8rem;color:var(--color-text-muted)">
+          {{ c.last_message_at.strftime('%d/%m %H:%M') if c.last_message_at else '—' }}
+        </td>
+        <td><a href="/admin/conversations/{{ c.id }}?tenant={{ tenant }}" class="btn btn-secondary" style="padding:.3rem .7rem;font-size:.8rem">Ver</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;color:var(--color-text-muted)">Sin conversaciones aún</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pages > 1 %}
+<div class="pagination">
+  {% if page > 1 %}<a href="?tenant={{ tenant }}&state={{ state }}&page={{ page - 1 }}">‹</a>{% endif %}
+  <span class="current">{{ page }} / {{ pages }}</span>
+  {% if page < pages %}<a href="?tenant={{ tenant }}&state={{ state }}&page={{ page + 1 }}">›</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

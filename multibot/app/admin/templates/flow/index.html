@@ -1,0 +1,575 @@
+{% extends "base.html" %}
+{% block title %}Flujo del bot — {{ tenant }}{% endblock %}
+{% block content %}
+<style>
+/* Estilos del lienzo embebidos para no depender del caché del CSS externo */
+.n8n-canvas {
+    position: relative;
+    background-color: #fafafa;
+    background-image: radial-gradient(circle, #d9d9d9 1.2px, transparent 1.2px);
+    background-size: 22px 22px;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 3.5rem 2.5rem 2.5rem;
+    overflow-x: auto;
+    min-height: 480px;
+}
+.n8n-wires { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.n8n-wire-label { font-size: .68rem; fill: #7a7a7a; font-family: system-ui, sans-serif; }
+.n8n-main-row {
+    position: relative; z-index: 1;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 2rem; max-width: 880px; margin: 0 auto;
+}
+.n8n-node-wrap { text-align: center; max-width: 230px; }
+.n8n-node {
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center; gap: .6rem;
+    background: white; border: 2px solid #5a9e5a; border-radius: 14px;
+    width: 96px; height: 96px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    font-size: 2.2rem; transition: box-shadow .2s;
+}
+.n8n-node:hover { box-shadow: 0 4px 14px rgba(0,0,0,.15); }
+.n8n-node-big { width: 300px; height: 110px; font-size: 1rem; padding: 0 1rem; }
+.n8n-node-title { font-weight: 700; font-size: .95rem; text-align: left; line-height: 1.25; }
+.n8n-node-title small { font-weight: 400; color: #757575; }
+.n8n-trigger { position: absolute; left: -14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; }
+.n8n-ports { position: absolute; bottom: -10px; left: 0; right: 0; display: flex; justify-content: space-evenly; }
+.n8n-port { color: #9b8ec4; font-size: .6rem; line-height: 1; text-align: center; }
+.n8n-port small { font-size: .58rem; color: #888; display: block; margin-top: 2px; }
+.n8n-label { font-weight: 700; font-size: .88rem; margin-top: 1.4rem; }
+.n8n-sublabel { font-size: .72rem; color: #757575; margin-top: .15rem; }
+.n8n-sub-row {
+    position: relative; z-index: 1;
+    display: flex; justify-content: center; gap: 3rem;
+    margin-top: 6rem; flex-wrap: wrap;
+}
+.n8n-sub-wrap { text-align: center; max-width: 150px; }
+.n8n-sub {
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 74px; height: 74px;
+    background: white; border: 2px solid #5a9e5a; border-radius: 50%;
+    font-size: 1.8rem; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.n8n-sub-wrap .n8n-label { margin-top: .6rem; font-size: .82rem; }
+.n8n-check {
+    position: absolute; right: -9px; bottom: -9px;
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem; font-weight: 900; color: white; border: 2px solid white;
+}
+.n8n-check:empty { display: none; }
+.n8n-ck-ok   { background: #2e9e44; }
+.n8n-ck-fail { background: #d32f2f; }
+.n8n-ck-prod { background: #1565c0; }
+.n8n-ck-warn { background: #ef6c00; }
+.n8n-gear {
+    position: absolute;
+    left: -7px; top: -7px;
+    width: 22px; height: 22px;
+    background: #fff;
+    border: 1.5px solid #bbb;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem;
+    color: #666;
+    transition: transform .15s, border-color .15s;
+}
+.n8n-sub:hover .n8n-gear { transform: rotate(45deg); border-color: #5a9e5a; color: #2e7d32; }
+</style>
+<div class="page-header">
+  <h1>Flujo del bot</h1>
+  <p class="subtitle">
+    {{ cfg.tenant_name }} — modo <span class="badge badge-green">{{ cfg.mode }}</span>
+    · {{ cfg.conversations }} conversaciones · {{ cfg.messages }} mensajes procesados
+  </p>
+</div>
+
+<!-- Probador en vivo -->
+<div class="card" style="margin-bottom:1rem">
+  <form id="flow-test" style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+    <input type="hidden" name="tenant" value="{{ tenant }}">
+    <input type="hidden" name="thread_id" value="flow-test">
+    <span style="font-weight:600">🧪 Prueba el flujo:</span>
+    <input class="form-control" name="message" placeholder="Escribe un mensaje como cliente... ej: hola quiero hacer parapente"
+           style="flex:1;min-width:280px" required>
+    <button class="btn btn-primary" type="submit" id="flow-run">▶ Enviar</button>
+    <button class="btn btn-secondary" type="button" id="flow-reset">↺ Limpiar</button>
+  </form>
+  <div id="flow-result" style="margin-top:.75rem;display:none"></div>
+</div>
+
+<!-- Lienzo estilo n8n -->
+<div class="n8n-canvas" id="canvas">
+  <svg id="wires" class="n8n-wires"></svg>
+
+  <!-- Cadena principal -->
+  <div class="n8n-main-row">
+    <div class="n8n-node-wrap">
+      <div class="n8n-node" id="nn-inbound">
+        <span class="n8n-trigger">⚡</span>
+        <span class="n8n-icon">📥</span>
+        <span class="n8n-check" id="ck-inbound"></span>
+      </div>
+      <div class="n8n-label">Mensaje entrante</div>
+      <div class="n8n-sublabel">Telegram · WhatsApp · Simulador</div>
+    </div>
+
+    <div class="n8n-node-wrap">
+      <div class="n8n-node n8n-node-big" id="nn-agent">
+        <span class="n8n-icon" style="font-size:2rem">🤖</span>
+        <div class="n8n-node-title">Cerebro Multibot<br><small>Pipeline</small></div>
+        <span class="n8n-check" id="ck-agent"></span>
+        <div class="n8n-ports">
+          <span class="n8n-port" data-port="0">◆<br><small>Seguridad</small></span>
+          <span class="n8n-port" data-port="1">◆<br><small>Memoria</small></span>
+          <span class="n8n-port" data-port="2">◆<br><small>Clasificador</small></span>
+          <span class="n8n-port" data-port="3">◆<br><small>IA</small></span>
+          <span class="n8n-port" data-port="4">◆<br><small>Handoff</small></span>
+          <span class="n8n-port" data-port="5">◆<br><small>BD</small></span>
+        </div>
+      </div>
+      <div class="n8n-label">Procesa el mensaje</div>
+      <div class="n8n-sublabel" id="agent-detail">anti-inyección → clasificar → responder</div>
+    </div>
+
+    <div class="n8n-node-wrap">
+      <div class="n8n-node" id="nn-send">
+        <span class="n8n-icon">📤</span>
+        <span class="n8n-check" id="ck-send"></span>
+      </div>
+      <div class="n8n-label">Enviar respuesta</div>
+      <div class="n8n-sublabel">por el mismo canal del cliente</div>
+    </div>
+  </div>
+
+  <!-- Recursos del cerebro (círculos colgando) -->
+  <div class="n8n-sub-row">
+    <div class="n8n-sub-wrap">
+      <div class="n8n-sub" id="ns-injection">🛡<span class="n8n-check n8n-check-sub" id="ck-injection"></span><span class="n8n-gear">⚙</span></div>
+      <div class="n8n-label">Anti-inyección {% if not cfg.anti_injection_enabled %}<span class="badge badge-red">OFF</span>{% endif %}</div>
+      <div class="n8n-sublabel">{{ cfg.injection_patterns }} patrones de bloqueo</div>
+    </div>
+    <div class="n8n-sub-wrap">
+      <div class="n8n-sub" id="ns-memory">🧠<span class="n8n-check n8n-check-sub" id="ck-memory"></span><span class="n8n-gear">⚙</span></div>
+      <div class="n8n-label">Memoria {% if not cfg.memory_enabled %}<span class="badge badge-red">OFF</span>{% endif %}</div>
+      <div class="n8n-sublabel">últimos {{ cfg.memory_turns }} turnos · {{ cfg.conversations }} conv.</div>
+    </div>
+    <div class="n8n-sub-wrap">
+      <div class="n8n-sub" id="ns-classify">🎯<span class="n8n-check n8n-check-sub" id="ck-classify"></span><span class="n8n-gear">⚙</span></div>
+      <div class="n8n-label">Clasificador KB</div>
+      <div class="n8n-sublabel">{{ cfg.intents_total }} intents · 0 LLM</div>
+    </div>
+    <div class="n8n-sub-wrap">
+      <div class="n8n-sub" id="ns-llm">🧩<span class="n8n-check n8n-check-sub" id="ck-llm"></span><span class="n8n-gear">⚙</span></div>
+      <div class="n8n-label">IA / LLM</div>
+      <div class="n8n-sublabel">{{ cfg.llm_providers }} proveedor(es) activo(s)</div>
+    </div>
+    <div class="n8n-sub-wrap">
+      <div class="n8n-sub" id="ns-handoff">🙋<span class="n8n-check n8n-check-sub" id="ck-handoff"></span><span class="n8n-gear">⚙</span></div>
+      <div class="n8n-label">Handoff humano</div>
+      <div class="n8n-sublabel">silencio {{ cfg.short_pause }}h · retoma {{ cfg.long_pause }}h</div>
+    </div>
+    <div class="n8n-sub-wrap">
+      <div class="n8n-sub" id="ns-persist">💾<span class="n8n-check n8n-check-sub" id="ck-persist"></span><span class="n8n-gear">⚙</span></div>
+      <div class="n8n-label">Persistencia</div>
+      <div class="n8n-sublabel">{{ cfg.messages }} mensajes guardados</div>
+    </div>
+    <div class="n8n-sub-wrap">
+      <div class="n8n-sub" id="ns-humanize">🎭<span class="n8n-check n8n-check-sub" id="ck-humanize"></span><span class="n8n-gear">⚙</span></div>
+      <div class="n8n-label">Humanización {% if not cfg.humanization.enabled %}<span class="badge badge-gray">OFF</span>{% else %}<span class="badge badge-green">ON</span>{% endif %}</div>
+      <div class="n8n-sublabel">
+        {% if cfg.humanization.enabled %}
+          {{ cfg.humanization.channels | join(', ') }} · máx {{ cfg.humanization.max_bubbles }} burbujas
+        {% else %}
+          desactivado
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-info" style="margin-top:1rem">
+  <strong>Cómo leerlo:</strong> el mensaje viaja por la línea principal (izquierda → derecha).
+  El <em>Cerebro Multibot</em> usa los recursos de abajo (líneas punteadas), igual que un AI Agent en n8n.
+  Al probar un mensaje: ✓ verde = ejecutado · ⛔ rojo = bloqueado · 🔵 = solo corre en producción.
+  <strong>Haz clic en un nodo</strong> para ver y cambiar su configuración ⚙️
+</div>
+
+{% if request.query_params.get('saved') %}
+<div class="alert alert-success">✓ Configuración guardada y aplicada al bot.</div>
+{% endif %}
+
+<!-- ─── Paneles de configuración por nodo ─── -->
+<div id="cfg-injection" class="card cfg-panel" style="display:none;margin-top:1rem;border-left:4px solid #5a9e5a">
+  <h3>🛡 Configurar: Anti-inyección</h3>
+  <form method="post" action="/admin/flow/config">
+    <input type="hidden" name="tenant" value="{{ tenant }}">
+    <input type="hidden" name="section" value="injection">
+    <div class="form-group">
+      <label>
+        <input type="checkbox" name="anti_injection_enabled" value="true"
+               {% if cfg.anti_injection_enabled %}checked{% endif %}>
+        Activar filtro anti-inyección ({{ cfg.injection_patterns }} patrones)
+      </label>
+      <p class="form-hint">Si lo desactivas, TODOS los mensajes pasan directo al clasificador (no recomendado en producción)</p>
+    </div>
+    <div class="form-group">
+      <label>Respuesta cuando se bloquea un mensaje</label>
+      <textarea class="form-control" name="injection_response" rows="2"
+                placeholder="(vacío = usar la respuesta por defecto)">{{ cfg.injection_response }}</textarea>
+    </div>
+    <button class="btn btn-primary" type="submit">Guardar</button>
+  </form>
+</div>
+
+<div id="cfg-memory" class="card cfg-panel" style="display:none;margin-top:1rem;border-left:4px solid #5a9e5a">
+  <h3>🧠 Configurar: Memoria</h3>
+  <form method="post" action="/admin/flow/config">
+    <input type="hidden" name="tenant" value="{{ tenant }}">
+    <input type="hidden" name="section" value="memory">
+    <div class="form-group">
+      <label>
+        <input type="checkbox" name="memory_enabled" value="true"
+               {% if cfg.memory_enabled %}checked{% endif %}>
+        Usar memoria de conversación
+      </label>
+      <p class="form-hint">El bot carga el historial reciente para dar contexto a las notificaciones de handoff</p>
+    </div>
+    <div class="form-group">
+      <label>Turnos de memoria (1-50)</label>
+      <input class="form-control" type="number" name="memory_turns" min="1" max="50"
+             value="{{ cfg.memory_turns }}" style="max-width:120px">
+    </div>
+    <button class="btn btn-primary" type="submit">Guardar</button>
+  </form>
+</div>
+
+<div id="cfg-classifier" class="card cfg-panel" style="display:none;margin-top:1rem;border-left:4px solid #5a9e5a">
+  <h3>🎯 Configurar: Clasificador</h3>
+  <form method="post" action="/admin/flow/config">
+    <input type="hidden" name="tenant" value="{{ tenant }}">
+    <input type="hidden" name="section" value="classifier">
+    <p style="font-size:.85rem;color:var(--color-text-muted);margin-bottom:.75rem">
+      Los {{ cfg.intents_total }} intents y sus regex se editan en
+      <a href="/admin/kb?tenant={{ tenant }}">Base de conocimiento</a>.
+      Aquí configuras qué responde cuando <strong>ningún intent coincide</strong> (fallback):
+    </p>
+    <div class="form-group">
+      <label>Respuesta de fallback ("no entendí")</label>
+      <textarea class="form-control" name="fallback_response" rows="4"
+                placeholder="(vacío = usar la respuesta por defecto: 'No entendí bien tu consulta 🤔...')">{{ cfg.fallback_response }}</textarea>
+    </div>
+    <button class="btn btn-primary" type="submit">Guardar</button>
+  </form>
+</div>
+
+<div id="cfg-handoff" class="card cfg-panel" style="display:none;margin-top:1rem;border-left:4px solid #5a9e5a">
+  <h3>🙋 Configurar: Handoff humano</h3>
+  <form method="post" action="/admin/flow/config">
+    <input type="hidden" name="tenant" value="{{ tenant }}">
+    <input type="hidden" name="section" value="handoff">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group">
+        <label>Ventana de silencio (horas)</label>
+        <input class="form-control" type="number" name="short_pause_hours" min="1" max="168"
+               value="{{ cfg.short_pause }}">
+        <p class="form-hint">El bot calla mientras el humano atiende</p>
+      </div>
+      <div class="form-group">
+        <label>Retoma automática (horas)</label>
+        <input class="form-control" type="number" name="long_pause_hours" min="1" max="336"
+               value="{{ cfg.long_pause }}">
+        <p class="form-hint">Si el humano no responde, el bot vuelve</p>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Mensaje mientras el humano atiende</label>
+      <textarea class="form-control" name="handoff_silence_response" rows="2"
+                placeholder="(vacío = usar el mensaje por defecto)">{{ cfg.handoff_silence_response }}</textarea>
+    </div>
+    <p style="font-size:.8rem;color:var(--color-text-muted);margin-bottom:.75rem">
+      Las reglas de disparo (H01, H02...) y a quién notificar se gestionan por intent en la
+      <a href="/admin/kb?tenant={{ tenant }}">Base de conocimiento</a>.
+    </p>
+    <button class="btn btn-primary" type="submit">Guardar</button>
+  </form>
+</div>
+
+<div id="cfg-llm" class="card cfg-panel" style="display:none;margin-top:1rem;border-left:4px solid #5a9e5a">
+  <h3>🧩 IA / LLM</h3>
+  <p style="font-size:.9rem;margin-bottom:.75rem">
+    Actualmente: <strong>{{ cfg.llm_providers }} proveedor(es) activo(s)</strong>.
+    El bot responde primero con la KB (regex, gratis). El LLM se usa para audios (STT),
+    imágenes (vision), voz (TTS) y failover de respuestas.
+  </p>
+  <a href="/admin/llm?tenant={{ tenant }}" class="btn btn-primary">⚙ Gestionar proveedores de IA</a>
+  <p class="form-hint" style="margin-top:.5rem">Ahí puedes agregar MiniMax, OpenAI, Groq, Ollama local u otro compatible — con API key cifrada, prioridad y failover.</p>
+</div>
+
+<div id="cfg-persist" class="card cfg-panel" style="display:none;margin-top:1rem;border-left:4px solid #5a9e5a">
+  <h3>💾 Persistencia</h3>
+  <p style="font-size:.9rem;color:var(--color-text-muted)">
+    Todos los mensajes se guardan siempre (es la base de las métricas, la memoria y el historial).
+    Este nodo no es configurable. Ver datos en
+    <a href="/admin/conversations?tenant={{ tenant }}">Conversaciones</a> y
+    <a href="/admin/metrics?tenant={{ tenant }}">Métricas</a>.
+  </p>
+</div>
+
+<div id="cfg-humanize" class="card cfg-panel" style="display:none;margin-top:1rem;border-left:4px solid #5a9e5a">
+  <h3>🎭 Configurar: Humanización del envío</h3>
+  <p style="font-size:.85rem;color:var(--color-text-muted);margin-bottom:.75rem">
+    Parte respuestas largas en burbujas, muestra "escribiendo…" y agrega pausas aleatorias
+    proporcionales al largo del texto. <b>Recomendado en WhatsApp no oficial</b> para reducir
+    el riesgo de bloqueo por patrón de bot. <em>Aplica al próximo mensaje sin reiniciar</em>.
+  </p>
+  <form method="post" action="/admin/flow/config">
+    <input type="hidden" name="tenant" value="{{ tenant }}">
+    <input type="hidden" name="section" value="humanization">
+    <div class="form-group">
+      <label>
+        <input type="checkbox" name="humanization_enabled" value="true"
+               {% if cfg.humanization.enabled %}checked{% endif %}>
+        Activar humanización
+      </label>
+    </div>
+    <div class="form-group">
+      <label>Aplica a canales (CSV)</label>
+      <input class="form-control" name="humanization_channels"
+             value="{{ cfg.humanization.channels | join(', ') }}"
+             placeholder="whatsapp_unofficial, telegram">
+      <p class="form-hint">
+        Valores posibles: <code>telegram</code>, <code>whatsapp_official</code>,
+        <code>whatsapp_unofficial</code>, <code>whatsapp_evolution</code>.
+        Recomendado: <b>whatsapp_unofficial</b> (riesgo de bloqueo). Opcional en Telegram.
+      </p>
+    </div>
+    <div class="form-group">
+      <label>
+        <input type="checkbox" name="humanization_split_bubbles" value="true"
+               {% if cfg.humanization.split_bubbles %}checked{% endif %}>
+        Partir respuestas en burbujas (por doble salto de párrafo)
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group">
+        <label>Máx. burbujas por respuesta</label>
+        <input class="form-control" type="number" name="humanization_max_bubbles"
+               min="1" max="20" value="{{ cfg.humanization.max_bubbles }}">
+      </div>
+      <div class="form-group">
+        <label>Velocidad de "tipeo" (palabras por minuto)</label>
+        <input class="form-control" type="number" name="humanization_wpm"
+               min="5" max="300" value="{{ cfg.humanization.wpm }}">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group">
+        <label>"Escribiendo…" mínimo (ms)</label>
+        <input class="form-control" type="number" name="humanization_typing_min_ms"
+               min="0" max="60000" value="{{ cfg.humanization.typing_min_ms }}">
+      </div>
+      <div class="form-group">
+        <label>"Escribiendo…" máximo (ms)</label>
+        <input class="form-control" type="number" name="humanization_typing_max_ms"
+               min="0" max="60000" value="{{ cfg.humanization.typing_max_ms }}">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group">
+        <label>Pausa entre burbujas mínima (ms)</label>
+        <input class="form-control" type="number" name="humanization_pause_min_ms"
+               min="0" max="60000" value="{{ cfg.humanization.pause_min_ms }}">
+      </div>
+      <div class="form-group">
+        <label>Pausa entre burbujas máxima (ms)</label>
+        <input class="form-control" type="number" name="humanization_pause_max_ms"
+               min="0" max="60000" value="{{ cfg.humanization.pause_max_ms }}">
+      </div>
+    </div>
+    <button class="btn btn-primary" type="submit">Guardar</button>
+  </form>
+</div>
+
+<script>
+// ───────────────────────── Conexiones SVG (estilo n8n) ─────────────────────────
+const svg = document.getElementById('wires');
+const canvas = document.getElementById('canvas');
+
+function pt(el, side) {
+  const c = canvas.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  if (side === 'right')  return { x: r.right - c.left,            y: r.top + r.height/2 - c.top };
+  if (side === 'left')   return { x: r.left - c.left,             y: r.top + r.height/2 - c.top };
+  if (side === 'top')    return { x: r.left + r.width/2 - c.left, y: r.top - c.top };
+  /* bottom */            return { x: r.left + r.width/2 - c.left, y: r.bottom - c.top };
+}
+
+function wire(p1, p2, opts = {}) {
+  const dx = Math.abs(p2.x - p1.x) * 0.5;
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  let d;
+  if (opts.vertical) {
+    const dy = Math.abs(p2.y - p1.y) * 0.5;
+    d = `M ${p1.x} ${p1.y} C ${p1.x} ${p1.y + dy}, ${p2.x} ${p2.y - dy}, ${p2.x} ${p2.y}`;
+  } else {
+    d = `M ${p1.x} ${p1.y} C ${p1.x + dx} ${p1.y}, ${p2.x - dx} ${p2.y}, ${p2.x} ${p2.y}`;
+  }
+  path.setAttribute('d', d);
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', opts.color || '#7cb87c');
+  path.setAttribute('stroke-width', opts.width || 2.5);
+  if (opts.dashed) path.setAttribute('stroke-dasharray', '6 5');
+  svg.appendChild(path);
+
+  // puntos de conexión (como n8n)
+  [p1, p2].forEach(p => {
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y); dot.setAttribute('r', 4);
+    dot.setAttribute('fill', opts.dashed ? '#9b8ec4' : '#5a9e5a');
+    svg.appendChild(dot);
+  });
+
+  if (opts.label) {
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('x', (p1.x + p2.x) / 2);
+    t.setAttribute('y', (p1.y + p2.y) / 2 - 8);
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('class', 'n8n-wire-label');
+    t.textContent = opts.label;
+    svg.appendChild(t);
+  }
+}
+
+function draw() {
+  svg.innerHTML = '';
+  const c = canvas.getBoundingClientRect();
+  svg.setAttribute('width', c.width);
+  svg.setAttribute('height', c.height);
+
+  const inbound = document.getElementById('nn-inbound');
+  const agent   = document.getElementById('nn-agent');
+  const send    = document.getElementById('nn-send');
+
+  wire(pt(inbound, 'right'), pt(agent, 'left'), { label: 'mensaje' });
+  wire(pt(agent, 'right'),   pt(send, 'left'),  { label: 'respuesta' });
+
+  const ports = agent.querySelectorAll('.n8n-port');
+  const subs = ['ns-injection','ns-memory','ns-classify','ns-llm','ns-handoff','ns-persist','ns-humanize'];
+  subs.forEach((id, i) => {
+    const sub = document.getElementById(id);
+    wire(pt(ports[i], 'bottom'), pt(sub, 'top'), { dashed: true, color: '#9b8ec4', width: 2 });
+  });
+}
+
+window.addEventListener('resize', draw);
+window.addEventListener('load', draw);
+setTimeout(draw, 150);
+
+// ───────────────────────── Simulación en vivo ─────────────────────────
+const CHECKS = ['inbound','agent','send','injection','memory','classify','llm','handoff','persist'];
+
+function setCheck(id, type, title) {
+  const el = document.getElementById('ck-' + id);
+  el.className = el.className.replace(/ n8n-ck-\w+/g, '');
+  if (type) {
+    el.classList.add('n8n-ck-' + type);
+    el.textContent = { ok: '✓', fail: '✕', prod: '·', warn: '!' }[type];
+    if (title) el.title = title;
+  } else {
+    el.textContent = '';
+  }
+}
+
+function resetChecks() {
+  CHECKS.forEach(id => setCheck(id, null));
+  document.getElementById('flow-result').style.display = 'none';
+  document.getElementById('agent-detail').textContent = 'anti-inyección → clasificar → responder';
+}
+
+document.getElementById('flow-reset').addEventListener('click', resetChecks);
+
+document.getElementById('flow-test').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  resetChecks();
+  const btn = document.getElementById('flow-run');
+  btn.disabled = true; btn.textContent = '⏳';
+  try {
+    const resp = await fetch('/admin/simulate/', { method: 'POST', body: new FormData(e.target) });
+    const d = await resp.json();
+    const t = {};
+    (d.trace || []).forEach(s => t[s.step] = s);
+
+    setCheck('inbound', 'ok', `${t.resolve_tenant ? t.resolve_tenant.ms + 'ms' : ''}`);
+
+    if (d.blocked) {
+      setCheck('injection', 'fail', 'Mensaje bloqueado');
+      setCheck('agent', 'fail');
+      document.getElementById('agent-detail').textContent = '⛔ bloqueado por seguridad';
+    } else {
+      setCheck('injection', 'ok');
+      setCheck('memory', 'prod', 'Solo corre en producción');
+      const det = (t.classify || {}).detail || {};
+      setCheck('classify', 'ok', `intent: ${det.intent}`);
+      setCheck('llm', 'prod', '0 llamadas — la KB resolvió');
+      setCheck('handoff', t.handoff_trigger ? 'warn' : 'prod', t.handoff_trigger ? 'Dispara handoff' : '');
+      setCheck('persist', 'prod', 'Solo corre en producción');
+      setCheck('agent', 'ok');
+      setCheck('send', 'ok');
+      document.getElementById('agent-detail').innerHTML =
+        `intent: <b>${det.intent}</b> · score ${det.score} · ${d.total_ms}ms · LLM: ${d.llm_calls}`;
+    }
+
+    const res = document.getElementById('flow-result');
+    res.style.display = '';
+    res.innerHTML = d.blocked
+      ? `<div class="alert alert-error" style="margin:0">⛔ Mensaje bloqueado por anti-inyección</div>`
+      : `<div class="alert alert-success" style="margin:0">
+           <b>[${d.intent}]</b> en ${d.total_ms}ms<br>
+           <em>"${(d.response_preview || '').substring(0, 200)}..."</em>
+         </div>`;
+  } catch(err) {
+    alert('Error: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '▶ Enviar';
+  }
+});
+
+// ───────────────────────── Configuración por nodo (clic) ─────────────────────────
+const NODE_PANELS = {
+  'ns-injection': 'cfg-injection',
+  'ns-memory': 'cfg-memory',
+  'ns-classify': 'cfg-classifier',
+  'ns-llm': 'cfg-llm',
+  'ns-handoff': 'cfg-handoff',
+  'ns-persist': 'cfg-persist',
+  'ns-humanize': 'cfg-humanize',
+};
+
+Object.entries(NODE_PANELS).forEach(([nodeId, panelId]) => {
+  const node = document.getElementById(nodeId);
+  node.style.cursor = 'pointer';
+  node.title = 'Clic para configurar';
+  node.addEventListener('click', () => {
+    const panel = document.getElementById(panelId);
+    const wasOpen = panel.style.display !== 'none';
+    document.querySelectorAll('.cfg-panel').forEach(p => p.style.display = 'none');
+    if (!wasOpen) {
+      panel.style.display = '';
+      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    }
+  });
+});
+
+// Si se acaba de guardar, abre el panel correspondiente
+const savedSection = new URLSearchParams(location.search).get('saved');
+if (savedSection) {
+  const map = { injection: 'cfg-injection', memory: 'cfg-memory', classifier: 'cfg-classifier', handoff: 'cfg-handoff', humanization: 'cfg-humanize' };
+  const p = document.getElementById(map[savedSection]);
+  if (p) p.style.display = '';
+}
+</script>
+{% endblock %}

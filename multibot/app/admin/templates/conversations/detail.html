@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Conversación #{{ conv.id }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Conversación #{{ conv.id }}</h1>
+  <p class="subtitle">
+    {{ conv.push_name or 'Sin nombre' }} •
+    <span class="badge {{ 'badge-green' if conv.state == 'active' else 'badge-orange' if conv.state == 'in_handoff' else 'badge-gray' }}">{{ conv.state }}</span>
+    • <a href="/admin/conversations?tenant={{ tenant }}">← Volver</a>
+  </p>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem">
+  <!-- Timeline -->
+  <div>
+    <div class="timeline">
+      {% for msg in messages %}
+      <div class="timeline-item {{ msg.role }}">
+        <div>
+          <div class="bubble">{{ msg.content_text or '(sin texto)' }}</div>
+          <div class="timeline-meta">
+            {{ msg.ts.strftime('%d/%m %H:%M:%S') if msg.ts else '' }} •
+            {{ msg.matched_via or '' }}
+            {% if msg.latency_ms %} • {{ msg.latency_ms }}ms{% endif %}
+            {% if msg.feedback and msg.feedback != 'none' %}
+            • <span class="badge {{ 'badge-green' if msg.feedback == 'good' else 'badge-red' }}">{{ msg.feedback }}</span>
+            {% endif %}
+          </div>
+          {% if msg.role == 'bot' %}
+          <div style="margin-top:.3rem;display:flex;gap:.4rem">
+            <form method="post" action="/admin/conversations/{{ conv.id }}/feedback/{{ msg.id }}?tenant={{ tenant }}" style="display:inline">
+              <input type="hidden" name="feedback" value="good">
+              <button class="btn badge-green" style="padding:.2rem .5rem;font-size:.75rem;border:1px solid #a5d6a7;border-radius:4px;cursor:pointer">👍</button>
+            </form>
+            <form method="post" action="/admin/conversations/{{ conv.id }}/feedback/{{ msg.id }}?tenant={{ tenant }}" style="display:inline">
+              <input type="hidden" name="feedback" value="bad">
+              <button class="btn badge-red" style="padding:.2rem .5rem;font-size:.75rem;border:1px solid #ef9a9a;border-radius:4px;cursor:pointer">👎</button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <p style="color:var(--color-text-muted)">Sin mensajes</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Metadata -->
+  <div>
+    <div class="card">
+      <h3>Detalles</h3>
+      <table style="font-size:.85rem">
+        <tr><th>Thread ID</th><td><code style="font-size:.75rem">{{ conv.external_thread_id }}</code></td></tr>
+        <tr><th>User ID</th><td><code style="font-size:.75rem">{{ conv.user_external_id or '—' }}</code></td></tr>
+        <tr><th>Modo</th><td>{{ conv.operation_mode_snapshot or '—' }}</td></tr>
+        <tr><th>Handoff</th><td>{{ conv.handoff_rule or '—' }}</td></tr>
+        <tr><th>En pausa</th><td>{{ '✓' if conv.in_handoff else '—' }}</td></tr>
+        {% if conv.handoff_expires_at %}
+        <tr><th>Expira</th><td>{{ conv.handoff_expires_at.strftime('%d/%m %H:%M') }}</td></tr>
+        {% endif %}
+        <tr><th>Último resp.</th><td>{{ conv.last_responder or '—' }}</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

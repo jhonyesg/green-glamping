@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Estado del sistema{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Estado del sistema</h1>
+  <p class="subtitle">
+    <span class="status-pill {{ 'ok' if all_ok else 'fail' }}">
+      {{ '● Operativo' if all_ok else '● Con problemas' }}
+    </span>
+  </p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+  <div class="card">
+    <h3>Servicios</h3>
+    {% for c in checks %}
+    <div class="check-row">
+      <div>
+        <div class="check-name">{{ '✅' if c.ok else '❌' }} {{ c.name }}</div>
+        <div class="check-detail">{{ c.detail }}</div>
+      </div>
+      {% if not c.ok and c.fix_url %}
+      <a href="{{ c.fix_url }}" class="btn btn-secondary" style="padding:.3rem .8rem;font-size:.78rem;white-space:nowrap">
+        ⚙ {{ c.fix_label or 'Configurar' }}
+      </a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom:1.5rem">
+      <h3>Información</h3>
+      <table style="font-size:.9rem">
+        <tr><th style="width:140px">Versión</th><td>{{ version }}</td></tr>
+        <tr><th>Entorno</th><td><span class="badge {{ 'badge-orange' if environment == 'development' else 'badge-green' }}">{{ environment }}</span></td></tr>
+        <tr><th>Uptime</th><td>{{ uptime }}</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Tenants</h3>
+      {% if tenants %}
+      <table style="font-size:.85rem">
+        <thead><tr><th>Slug</th><th>Nombre</th><th>Estado</th><th>Modo</th><th>Poller Telegram</th></tr></thead>
+        <tbody>
+          {% for t in tenants %}
+          {% set pstate = poller_rows | selectattr('tenant', 'equalto', t.slug) | map(attribute='state') | first %}
+          <tr>
+            <td><code>{{ t.slug }}</code></td>
+            <td>{{ t.name }}</td>
+            <td><span class="badge {{ 'badge-green' if t.status == 'active' else 'badge-gray' }}">{{ t.status }}</span></td>
+            <td>{{ t.operation_mode }}</td>
+            <td>
+              {% if pstate %}
+                <span class="poller-state poller-{{ pstate }}">{{ pstate }}</span>
+              {% else %}
+                <span class="poller-state poller-stopped">stopped</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p style="color:var(--color-text-muted)">Sin tenants creados.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .poller-state { font-size:.7rem; padding:.15rem .45rem; border-radius:10px; }
+  .poller-running     { background:#d3f9d8; color:#2b8a3e; }
+  .poller-stopped     { background:#e9ecef; color:#495057; }
+  .poller-conflicted  { background:#ffe3e3; color:#c92a2a; }
+  .poller-error       { background:#fff3bf; color:#b08900; }
+</style>
+
+<div style="margin-top:1rem">
+  <button class="btn btn-secondary" onclick="location.reload()">↻ Actualizar</button>
+</div>
+{% endblock %}

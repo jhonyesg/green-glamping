@@ -1,0 +1,8 @@
+=== AUDIO 01e: BIENVENIDA / DESDE ANUNCIO ===
+ID: audio_bienvenida_anuncio
+USO: Cuando el cliente llega con la etiqueta "from_ad=true" (vino de Facebook/Instagram ads).
+DURACIÓN APROX: 9 segundos
+
+TEXTO A GRABAR / TTS:
+"¡Hola! Gracias por el interés. Vimos que viste nuestra publicación. Te cuento rápido: tenemos glamping, parapente y combos. ¿Qué te llamó la atención?"
+IMPORTANTE: Decir en primera persona. Nunca decir "soy bot".

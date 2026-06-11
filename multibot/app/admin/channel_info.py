@@ -1,0 +1,101 @@
+"""Fichas informativas de canales — lenguaje para dueños de negocio, no técnicos."""
+
+CHANNEL_INFO = {
+    "telegram": {
+        "titulo": "✈️ Telegram",
+        "que_es": "App de mensajería gratuita donde los bots son ciudadanos de primera clase: cualquiera puede crear uno en 2 minutos.",
+        "como_funciona": "Creas un bot con @BotFather (te da un 'token', la llave secreta). Multibot usa esa llave para leer y responder los mensajes que la gente le escribe a tu bot.",
+        "ventajas": [
+            "100% gratis y sin límites de mensajes",
+            "Cero riesgo de bloqueo — los bots son oficiales y bienvenidos",
+            "Se configura en minutos, ideal para pruebas y para el panel interno",
+            "Soporta botones, fotos, audios, documentos",
+        ],
+        "desventajas": [
+            "En Colombia mucha gente no usa Telegram a diario",
+            "El cliente tiene que buscar tu bot (no le puedes escribir tú primero)",
+        ],
+        "costo": "Gratis",
+        "requisitos": "Crear el bot en @BotFather y pegar el token aquí",
+        "riesgo": "Ninguno — es el canal oficial para bots",
+        "oficial": True,
+    },
+    "whatsapp_official": {
+        "titulo": "🟢 WhatsApp Oficial (Meta Business)",
+        "que_es": "La API oficial de WhatsApp para empresas, operada por Meta (Facebook).",
+        "como_funciona": "Meta te aprueba un número empresarial. Los mensajes pasan por los servidores de Meta con garantía de entrega. Para escribirle tú primero a un cliente necesitas plantillas pre-aprobadas.",
+        "ventajas": [
+            "Cero riesgo de bloqueo — es el canal oficial",
+            "Check verde de empresa verificada (confianza)",
+            "Estable: nunca se desconecta ni pide escanear QR",
+            "Permite iniciar conversaciones (con plantillas aprobadas)",
+        ],
+        "desventajas": [
+            "Cuesta dinero por conversación (≈ $50-300 COP según tipo)",
+            "Requiere verificación del negocio ante Meta (días o semanas)",
+            "El número queda dedicado a la API: no puedes usarlo en el celular",
+            "Las plantillas de marketing deben aprobarse una a una",
+        ],
+        "costo": "Por conversación, según categoría (servicio/marketing). Primeras 1.000 conversaciones de servicio al mes gratis.",
+        "requisitos": "Cuenta Meta Business verificada + número dedicado",
+        "riesgo": "Ninguno de bloqueo; el riesgo es el proceso de aprobación",
+        "oficial": True,
+    },
+    "evolution": {
+        "titulo": "🔌 Evolution API",
+        "que_es": "Un 'puente' open-source que conecta el WhatsApp normal de tu negocio con el bot — como tener WhatsApp Web pero controlado por Multibot. Es el más usado en Latinoamérica.",
+        "como_funciona": "Se instala en tu servidor (con Docker). Escaneas un código QR con el celular del negocio (igual que WhatsApp Web) y listo: el bot lee y responde por ese número.",
+        "ventajas": [
+            "Gratis — usa tu número de WhatsApp de siempre",
+            "Sin aprobación de Meta ni papeleos",
+            "Soporta varios números (multi-instancia)",
+            "Fotos, audios, ubicaciones... todo lo normal de WhatsApp",
+        ],
+        "desventajas": [
+            "NO es oficial: existe riesgo de que WhatsApp bloquee el número si detecta comportamiento de robot o spam",
+            "Cada cierto tiempo puede pedir re-escanear el QR",
+            "Depende de que tu servidor esté siempre encendido",
+        ],
+        "costo": "Gratis (corre en tu servidor)",
+        "requisitos": "Docker + escanear un QR con el celular del negocio",
+        "riesgo": "Bloqueo del número: riesgo BAJO si se responde solo a quien escribe primero y con la Humanización activada (el bot escribe a ritmo de persona). Riesgo ALTO si se envía publicidad masiva — nunca lo hagas por este canal.",
+        "oficial": False,
+    },
+    "baileys": {
+        "titulo": "🔧 Puente Baileys propio",
+        "que_es": "Versión mínima del mismo concepto de Evolution, incluida en este proyecto. Un solo número, sin piezas extra.",
+        "como_funciona": "Igual que Evolution: QR con el celular del negocio. La diferencia es que es más simple — menos funciones, menos cosas que mantener.",
+        "ventajas": [
+            "Gratis y ya viene incluido en Multibot",
+            "Súper ligero: ideal para un solo número",
+            "Sin base de datos ni servicios adicionales",
+        ],
+        "desventajas": [
+            "Mismo riesgo de bloqueo que cualquier opción no oficial",
+            "Un solo número por instalación",
+            "Menos funciones que Evolution (sin API de grupos, etc.)",
+        ],
+        "costo": "Gratis",
+        "requisitos": "Node.js 20+ y escanear el QR",
+        "riesgo": "Igual que Evolution: bajo con buen uso + Humanización; nunca enviar spam.",
+        "oficial": False,
+    },
+    "waha": {
+        "titulo": "📦 WAHA",
+        "que_es": "Otra alternativa de puente no oficial (WhatsApp HTTP API), popular fuera de Latinoamérica.",
+        "como_funciona": "Igual que Evolution: contenedor Docker + QR. API REST sencilla y estable.",
+        "ventajas": [
+            "Imagen Docker muy estable y bien documentada",
+            "API simple",
+        ],
+        "desventajas": [
+            "Mismo riesgo de bloqueo que toda opción no oficial",
+            "Las funciones avanzadas son de pago (versión Plus)",
+            "Comunidad hispana más pequeña que la de Evolution",
+        ],
+        "costo": "Gratis (núcleo) / Plus de pago",
+        "requisitos": "Docker + QR",
+        "riesgo": "Igual que Evolution: bajo con buen uso + Humanización.",
+        "oficial": False,
+    },
+}

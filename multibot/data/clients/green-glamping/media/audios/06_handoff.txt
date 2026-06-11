@@ -1,0 +1,8 @@
+=== AUDIO 06: TRANSFERENCIA A COMPAÑERA DEL EQUIPO ===
+ID: audio_handoff
+USO: Cuando se cumplen las condiciones de handoff (cliente eligió combo + fecha y quiere agendar)
+DURACIÓN APROX: 7 segundos
+IMPORTANTE: Decirlo en primera persona. NUNCA decir "soy un bot" ni "asesor". Hablar como una compañera del equipo.
+
+TEXTO A GRABAR / TTS:
+"Perfecto, ya te paso con mi compañera para que ella te termine de ayudar con la reserva. En un momento te escribe por este mismo chat, no te preocupes que no tienes que salir ni mandar nada más."

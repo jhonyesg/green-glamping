@@ -1,0 +1,8 @@
+=== AUDIO 04: PROCESO DE RESERVA (PASO A PASO) ===
+ID: audio_como_reservar
+USO: Cuando el cliente pregunta cómo reservar, cómo apartar, cómo pagar
+DURACIÓN APROX: 25 segundos
+NOTA: Este es largo. Considerar texto + audio de apoyo.
+
+TEXTO A GRABAR / TTS:
+"Para reservar, primero confirma con nosotros la fecha y el combo. Segundo, elige tu medio de pago: Nequi, Daviplata, Davivienda o BBVA. Tercero, envianos el comprobante junto con tu nombre, documento, teléfono, correo y el paquete que quieres. Cuarto, te llega un correo de confirmación con las políticas. Listo, ¡preparate para vivir la mejor experiencia!"

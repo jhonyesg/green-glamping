@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Base de conocimiento — {{ tenant }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Base de conocimiento</h1>
+  <p class="subtitle">Tenant: <strong>{{ tenant }}</strong> — {{ total }} intents</p>
+</div>
+
+<div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+  <form method="get" action="/admin/kb" style="display:flex;gap:.5rem;align-items:center;flex:1">
+    <input type="hidden" name="tenant" value="{{ tenant }}">
+    <input class="form-control" name="search" placeholder="Buscar intent..." value="{{ search }}" style="max-width:300px">
+    <select class="form-control" name="status" style="max-width:160px">
+      <option value="">Todos los estados</option>
+      <option value="active" {% if status == 'active' %}selected{% endif %}>Activo</option>
+      <option value="draft" {% if status == 'draft' %}selected{% endif %}>Borrador</option>
+      <option value="pending_approval" {% if status == 'pending_approval' %}selected{% endif %}>Pendiente</option>
+    </select>
+    <button class="btn btn-secondary" type="submit">Buscar</button>
+  </form>
+  <a href="/admin/kb/new?tenant={{ tenant }}" class="btn btn-primary">+ Nuevo intent</a>
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Intent</th>
+        <th>Prioridad</th>
+        <th>Estado</th>
+        <th>Handoff</th>
+        <th>Resp.</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in intents %}
+      <tr>
+        <td><code style="font-size:.85rem">{{ i.intent_name }}</code></td>
+        <td>{{ i.priority }}</td>
+        <td>
+          <span class="badge {{ 'badge-green' if i.status == 'active' else 'badge-gray' if i.status == 'draft' else 'badge-orange' }}">
+            {{ i.status }}
+          </span>
+        </td>
+        <td>
+          {% if i.requires_human %}
+          <span class="badge badge-orange">handoff</span>
+          {% else %}—{% endif %}
+        </td>
+        <td>{{ i.resp_len }} chars</td>
+        <td>
+          <a href="/admin/kb/{{ i.id }}?tenant={{ tenant }}" class="btn btn-secondary" style="padding:.3rem .7rem;font-size:.8rem">Editar</a>
+          <form method="post" action="/admin/kb/{{ i.id }}/delete?tenant={{ tenant }}" style="display:inline"
+                onsubmit="return confirm('¿Eliminar intent {{ i.intent_name }}?')">
+            <button class="btn" style="background:#ffebee;color:#c62828;padding:.3rem .7rem;font-size:.8rem" type="submit">✕</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;color:var(--color-text-muted)">Sin intents. <a href="/admin/kb/new?tenant={{ tenant }}">Crear el primero</a></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pages > 1 %}
+<div class="pagination">
+  {% if page > 1 %}<a href="?tenant={{ tenant }}&page={{ page - 1 }}&search={{ search }}&status={{ status }}">‹</a>{% endif %}
+  {% for p in range(1, pages + 1) %}
+  <{% if p == page %}span class="current"{% else %}a href="?tenant={{ tenant }}&page={{ p }}&search={{ search }}&status={{ status }}"{% endif %}>{{ p }}</{% if p == page %}span{% else %}a{% endif %}>
+  {% endfor %}
+  {% if page < pages %}<a href="?tenant={{ tenant }}&page={{ page + 1 }}&search={{ search }}&status={{ status }}">›</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

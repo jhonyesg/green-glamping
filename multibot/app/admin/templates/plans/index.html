@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% block title %}Servicios — {{ tenant }}{% endblock %}
+{% block content %}
+<style>
+  .servicios-header {
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;
+  }
+  .servicios-header h1 { margin:0; }
+
+  .btn-new {
+    background: var(--color-primary); color:white; border:none;
+    padding:.55rem 1.1rem; border-radius:8px; font-weight:600;
+    font-size:.95rem; cursor:pointer; display:inline-flex;
+    align-items:center; gap:.4rem;
+  }
+  .btn-new:hover { opacity:.9; }
+
+  /* Grid de cards de servicios */
+  .servicios-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.1rem;
+  }
+  .servicio-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    transition: box-shadow .15s, transform .15s;
+  }
+  .servicio-card:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,.08);
+    transform: translateY(-2px);
+  }
+  .servicio-card .card-img {
+    width: 100%; aspect-ratio: 16/10;
+    object-fit: cover; background:#f3f4f6;
+    display:flex; align-items:center; justify-content:center;
+    color:#9ca3af; font-size:2.5rem;
+  }
+  .servicio-card .card-body {
+    padding: .9rem 1rem 1rem; display:flex; flex-direction:column; gap:.4rem; flex:1;
+  }
+  .servicio-card .card-title {
+    font-size: 1.02rem; font-weight: 600; color: #111827; margin:0;
+    line-height: 1.3;
+  }
+  .servicio-card .card-slug {
+    font-size:.72rem; color:#6b7280; font-family:monospace;
+  }
+  .servicio-card .card-price {
+    font-size: 1.4rem; font-weight: 700; color: #2e7d32; margin-top:.3rem;
+  }
+  .servicio-card .card-incluye {
+    font-size:.82rem; color:#4b5563; line-height:1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .servicio-card .card-actions {
+    display:flex; gap:.4rem; margin-top:auto; padding-top:.5rem;
+    border-top: 1px solid #f3f4f6;
+  }
+  .servicio-card .card-actions form, .servicio-card .card-actions a {
+    flex: 1;
+  }
+  .icon-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:.4rem .5rem; border-radius:6px; font-size:.78rem;
+    background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb;
+    cursor:pointer; text-decoration:none; width:100%;
+  }
+  .icon-btn:hover { background:#e5e7eb; }
+  .icon-btn.danger { color:#c92a2a; }
+  .icon-btn.danger:hover { background:#fee2e2; }
+
+  /* Modal genérico */
+  .modal-back {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.55);
+    z-index: 9999; align-items:center; justify-content:center;
+    padding: 1rem;
+  }
+  .modal-back.open { display:flex; }
+  .modal-box {
+    background:white; border-radius:14px; max-width:680px; width:100%;
+    max-height:90vh; overflow-y:auto; padding:1.75rem 2rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,.30);
+  }
+  .modal-box.modal-preview { max-width: 720px; }
+  .modal-box h2 { margin: 0 0 1rem; color:#111827; }
+  .modal-close-x {
+    float:right; background:none; border:none; font-size:1.6rem;
+    line-height:1; cursor:pointer; color:#6b7280;
+  }
+  .modal-close-x:hover { color:#111827; }
+
+  /* Modal de vista previa (ficha pública) */
+  .preview-img {
+    width: 100%; aspect-ratio: 16/9; object-fit: cover;
+    border-radius: 10px; background:#f3f4f6; margin-bottom: 1rem;
+  }
+  .preview-img-placeholder {
+    width: 100%; aspect-ratio: 16/9; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-radius: 10px; margin-bottom: 1rem;
+    display:flex; align-items:center; justify-content:center;
+    color: #047857; font-size: 3rem;
+  }
+  .preview-price {
+    font-size: 1.8rem; font-weight: 700; color: #047857; margin: .25rem 0 .75rem;
+  }
+  .preview-desc { color: #374151; line-height: 1.5; margin-bottom: 1rem; }
+  .preview-incluye {
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+    padding: .75rem 1rem; color: #166534; font-size:.9rem;
+  }
+  .preview-incluye strong { display:block; margin-bottom:.3rem; }
+  .preview-incluye ul { margin:0; padding-left: 1.1rem; }
+  .preview-incluye li { margin-bottom: .15rem; }
+
+  /* Form modal */
+  .form-grid {
+    display:grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .servicios-grid { grid-template-columns: 1fr; }
+    .modal-box { padding: 1.25rem 1.25rem; max-height: 95vh; }
+    .servicio-card .card-img { aspect-ratio: 4/3; }
+  }
+</style>
+
+<div class="servicios-header">
+  <h1>🛎 Servicios <span style="color:#9ca3af;font-weight:400;font-size:.7em">({{ offerings | length }})</span></h1>
+  <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+    <select class="form-control" style="padding:.35rem .6rem" onchange="location.href='/admin/plans?tenant='+this.value">
+      {% for t in tenants %}
+      <option value="{{ t }}" {% if t == tenant %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn-new" onclick="openNewModal()">＋ Nuevo servicio</button>
+  </div>
+</div>
+
+{% if saved %}
+<div class="alert alert-success">✓ Servicio {{ saved }}.</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-error">⚠ Error: {{ error }}</div>
+{% endif %}
+
+{% if offerings %}
+<div class="servicios-grid">
+  {% for o in offerings %}
+  <div class="servicio-card" id="card-{{ o.id }}">
+    {% if o.imagen_id and o.imagen_url %}
+      <img class="card-img" src="{{ o.imagen_url }}" alt="{{ o.nombre }}" loading="lazy">
+    {% else %}
+      <div class="card-img">🖼</div>
+    {% endif %}
+    <div class="card-body">
+      <h3 class="card-title">{{ o.nombre }}</h3>
+      <code class="card-slug">{{ o.slug }}</code>
+      <div class="card-price">{{ o.precio_cop_fmt }}</div>
+      {% if o.incluye %}
+        <div class="card-incluye">{{ o.incluye | join(' · ') }}</div>
+      {% endif %}
+      <div class="card-actions">
+        <button type="button" class="icon-btn" data-preview-id="{{ o.id }}"
+                title="Vista previa (cómo se ve para el cliente)">👁 Ver</button>
+        <a class="icon-btn" href="/admin/plans/{{ o.id }}/edit?tenant={{ tenant }}" title="Editar">✎ Editar</a>
+        <button type="button" class="icon-btn" data-toggle-id="{{ o.id }}"
+                title="Activar / desactivar">{% if o.is_active %}🗑{% else %}↩{% endif %}</button>
+        <button type="button" class="icon-btn danger" data-delete-id="{{ o.id }}" title="Eliminar (permanente)">❌</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:3rem 1rem;color:#6b7280">
+  <p style="font-size:1.05rem;margin:0 0 1rem">No hay servicios todavía.</p>
+  <button class="btn-new" onclick="openNewModal()">＋ Crear el primer servicio</button>
+</div>
+{% endif %}
+
+<!-- Modal: Nuevo servicio -->
+<div class="modal-back" id="new-modal">
+  <div class="modal-box">
+    <button class="modal-close-x" onclick="closeNewModal()" aria-label="Cerrar">×</button>
+    <h2>➕ Nuevo servicio</h2>
+    <form method="post" action="/admin/plans/">
+      <input type="hidden" name="tenant" value="{{ tenant }}">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Slug (único, snake_case)</label>
+          <input class="form-control" name="slug" required pattern="[a-z0-9_-]+"
+                 placeholder="combo_glamping" autofocus>
+        </div>
+        <div class="form-group">
+          <label>Nombre</label>
+          <input class="form-control" name="nombre" required
+                 placeholder="Glamping + Parapente">
+        </div>
+        <div class="form-group full">
+          <label>Descripción</label>
+          <textarea class="form-control" name="descripcion" rows="2"
+                    placeholder="Una noche de glamping con vuelo en parapente para dos"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Precio desde (COP)</label>
+          <input class="form-control" name="precio_cop" type="number"
+                 min="0" step="0.01" value="0">
+          <p class="form-hint">Precio de referencia. La plataforma lo
+          muestra pero no procesa pagos: el dueño y el cliente
+          cierran el negocio por el canal que prefieran.</p>
+        </div>
+        <div class="form-group">
+          <label>Orden de visualización</label>
+          <input class="form-control" name="display_order" type="number"
+                 value="100">
+        </div>
+        <div class="form-group full">
+          <label>Qué incluye (uno por línea)</label>
+          <textarea class="form-control" name="incluye" rows="3"
+                    placeholder="Vuelo parapente biplaza&#10;1 noche Glamping Montaña&#10;Cena romántica opcional"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>
+            <input type="checkbox" name="is_active" value="true" checked>
+            Activo (visible en respuestas del bot)
+          </label>
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:1rem;justify-content:flex-end">
+        <button type="button" class="btn btn-secondary" onclick="closeNewModal()">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Crear servicio</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Vista previa de servicio (ficha pública) -->
+<div class="modal-back" id="preview-modal">
+  <div class="modal-box modal-preview" id="preview-content">
+    <button class="modal-close-x" onclick="closePreviewModal()" aria-label="Cerrar">×</button>
+    <div id="preview-body"></div>
+  </div>
+</div>
+
+<!-- Forms ocultos para las acciones por card (deactivate / hard delete) -->
+<form id="form-deactivate" method="post" style="display:none">
+  <input type="hidden" name="tenant" value="{{ tenant }}">
+</form>
+<form id="form-delete" method="post" style="display:none">
+  <input type="hidden" name="tenant" value="{{ tenant }}">
+</form>
+
+<script>
+// Datos de los servicios para la vista previa (cargados desde el server)
+const SERVICIOS = {{ offerings | tojson }};
+const TENANT = {{ tenant | tojson }};
+
+// ── Modal Nuevo ──
+function openNewModal() {
+  document.getElementById('new-modal').classList.add('open');
+  setTimeout(() => {
+    const first = document.querySelector('#new-modal input[name="slug"]');
+    if (first) first.focus();
+  }, 100);
+}
+function closeNewModal() {
+  document.getElementById('new-modal').classList.remove('open');
+}
+document.getElementById('new-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'new-modal') closeNewModal();
+});
+
+// ── Modal Vista previa ──
+function openPreviewModal(id) {
+  const s = SERVICIOS.find(x => x.id === id);
+  if (!s) return;
+  const img = s.imagen_url
+    ? `<img class="preview-img" src="${s.imagen_url}" alt="${esc(s.nombre)}">`
+    : `<div class="preview-img-placeholder">🛎</div>`;
+  const incluye = (s.incluye || []).length > 0
+    ? `<div class="preview-incluye">
+         <strong>Qué incluye</strong>
+         <ul>${(s.incluye || []).map(i => `<li>${esc(i)}</li>`).join('')}</ul>
+       </div>`
+    : '';
+  const desc = s.descripcion
+    ? `<p class="preview-desc">${esc(s.descripcion)}</p>`
+    : '';
+  document.getElementById('preview-body').innerHTML = `
+    ${img}
+    <code style="color:#6b7280;font-size:.75rem">${esc(s.slug)}</code>
+    <h2 style="margin:.2rem 0 0">${esc(s.nombre)}</h2>
+    <div class="preview-price">${esc(s.precio_cop_fmt || '$0')}</div>
+    ${desc}
+    ${incluye}
+    <p class="form-hint" style="margin-top:1rem;font-size:.78rem">
+      Así se ve la ficha del servicio. Esta es la vista que recibe
+      el cliente cuando pregunta por un combo o los precios.
+    </p>
+  `;
+  document.getElementById('preview-modal').classList.add('open');
+}
+function closePreviewModal() {
+  document.getElementById('preview-modal').classList.remove('open');
+}
+document.getElementById('preview-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'preview-modal') closePreviewModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeNewModal();
+    closePreviewModal();
+  }
+});
+
+// ── Acciones por card ──
+document.querySelectorAll('[data-preview-id]').forEach(btn => {
+  btn.addEventListener('click', () => openPreviewModal(parseInt(btn.dataset.previewId)));
+});
+document.querySelectorAll('[data-toggle-id]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!confirm('¿Desactivar este servicio? Lo podés reactivar editándolo.')) return;
+    const f = document.getElementById('form-deactivate');
+    f.action = `/admin/plans/${btn.dataset.toggleId}/deactivate`;
+    f.submit();
+  });
+});
+document.querySelectorAll('[data-delete-id]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!confirm('⚠ ¿Eliminar DEFINITIVAMENTE este servicio? No se puede recuperar. Usá desactivar si pensás volver a ofrecerlo.')) return;
+    const f = document.getElementById('form-delete');
+    f.action = `/admin/plans/${btn.dataset.deleteId}/delete`;
+    f.submit();
+  });
+});
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+</script>
+{% endblock %}

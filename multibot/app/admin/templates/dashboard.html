@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Multibot{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Bienvenido a Multibot</h1>
+    <p class="subtitle">Plataforma de Atención Multi-Canal — versión {{ version }}</p>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <h3>Estado del sistema</h3>
+        <p style="color:var(--color-text-muted);font-size:.9rem;margin-bottom:1rem">
+            Verifica la conexión a la base de datos, Redis y los canales.
+        </p>
+        <a href="/admin/status" class="btn btn-primary">Ver estado</a>
+    </div>
+
+    <div class="card">
+        <h3>Probar el bot</h3>
+        <p style="color:var(--color-text-muted);font-size:.9rem;margin-bottom:1rem">
+            Simula mensajes de clientes sin necesidad de Telegram o WhatsApp.
+        </p>
+        <a href="/admin/simulate" class="btn btn-primary">Abrir simulador</a>
+    </div>
+
+    <div class="card">
+        <h3>Base de conocimiento</h3>
+        <p style="color:var(--color-text-muted);font-size:.9rem;margin-bottom:1rem">
+            Edita los intents y respuestas del bot.
+        </p>
+        <a href="/admin/kb" class="btn btn-primary">Gestionar KB</a>
+    </div>
+
+    <div class="card">
+        <h3>Documentación API</h3>
+        <ul style="line-height:2">
+            <li><a href="/docs">Swagger UI</a></li>
+            <li><a href="/redoc">ReDoc</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

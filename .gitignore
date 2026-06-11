@@ -1,0 +1,57 @@
+# ─── Python ───
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+__pypackages__/
+
+# ─── Entornos virtuales ───
+.venv/
+venv/
+env/
+ENV/
+
+# ─── Secrets y entorno ───
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# ─── Uploads y datos runtime (regenerables, NO versionar) ───
+multibot/data/uploads/
+multibot/data/seeds/dev_*.json
+multibot/data/dialogs.sqlite
+multibot/logs/
+*.log
+
+# ─── IDE ───
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ─── OS ───
+.DS_Store
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ─── OpenSpec local ───
+.openspec.yaml.local
+
+# ─── Agentes locales ───
+.kilocode/
+.kilo/
+.claude/

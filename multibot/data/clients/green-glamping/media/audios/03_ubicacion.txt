@@ -1,0 +1,7 @@
+=== AUDIO 03: UBICACIÓN ===
+ID: audio_ubicacion
+USO: Cuando el cliente pregunta "dónde están", "ubicación", "cómo llego", "dirección"
+DURACIÓN APROX: 12 segundos
+
+TEXTO A GRABAR / TTS:
+"Nos encontramos en Chipaque, Cundinamarca, por la vía al Llano, a treinta minutos de Bogotá. Puedes llegar en carro o moto. Si lo necesitas, te compartimos la ubicación exacta por escrito."

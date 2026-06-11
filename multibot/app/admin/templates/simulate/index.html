@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Simulador de pipeline{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Simulador de pipeline</h1>
+  <p class="subtitle">Prueba mensajes sin escribir en el bot real</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+  <div class="card">
+    <h3>Mensaje de prueba</h3>
+    <form id="sim-form">
+      <div class="form-group">
+        <label>Tenant</label>
+        <input class="form-control" name="tenant" value="{{ tenant }}">
+      </div>
+      <div class="form-group">
+        <label>Thread ID (simulado)</label>
+        <input class="form-control" name="thread_id" value="sim-001">
+      </div>
+      <div class="form-group">
+        <label>Mensaje del usuario</label>
+        <textarea class="form-control" name="message" rows="4" placeholder="Hola, quiero saber los precios..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Intent esperado (para exportar test)</label>
+        <input class="form-control" name="expected_intent" placeholder="saludo_puro">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit" id="run-btn">▶ Simular</button>
+        <button class="btn btn-secondary" type="button" id="export-btn">📥 Exportar test</button>
+      </div>
+    </form>
+  </div>
+
+  <div>
+    <div class="card" id="result-card" style="display:none">
+      <h3>Resultado <span id="result-badge"></span></h3>
+      <div id="result-summary" style="margin-bottom:1rem;font-size:.9rem"></div>
+      <h4 style="margin-bottom:.5rem">Trace de decisión</h4>
+      <div id="trace"></div>
+    </div>
+    <div class="card" id="bubbles-card" style="display:none;margin-top:1rem">
+      <h3>🎭 Plan de humanización (sin esperar los retardos)</h3>
+      <div id="bubbles"></div>
+    </div>
+    <div class="card" id="export-card" style="display:none;margin-top:1rem">
+      <h3>Test generado</h3>
+      <pre id="export-code" style="font-size:.75rem;overflow-x:auto;background:#f5f5f5;padding:1rem;border-radius:8px"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+const form = document.getElementById('sim-form');
+const runBtn = document.getElementById('run-btn');
+const exportBtn = document.getElementById('export-btn');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  runBtn.textContent = '⏳ Simulando...';
+  runBtn.disabled = true;
+
+  const fd = new FormData(form);
+  try {
+    const resp = await fetch('/admin/simulate/', { method: 'POST', body: fd });
+    const data = await resp.json();
+    renderResult(data);
+  } catch(err) {
+    alert('Error: ' + err.message);
+  } finally {
+    runBtn.textContent = '▶ Simular';
+    runBtn.disabled = false;
+  }
+});
+
+exportBtn.addEventListener('click', async () => {
+  const fd = new FormData(form);
+  const resp = await fetch('/admin/simulate/export-test', { method: 'POST', body: fd });
+  const data = await resp.json();
+  document.getElementById('export-card').style.display = '';
+  document.getElementById('export-code').textContent = data.code;
+});
+
+function renderResult(data) {
+  document.getElementById('result-card').style.display = '';
+  const badge = document.getElementById('result-badge');
+
+  if (data.blocked) {
+    badge.innerHTML = '<span class="badge badge-red">BLOQUEADO</span>';
+  } else {
+    badge.innerHTML = `
+      <span class="badge badge-green">${data.intent}</span>
+      <span class="badge badge-gray" style="margin-left:.3rem">${data.total_ms}ms</span>
+      ${data.requires_human ? '<span class="badge badge-orange" style="margin-left:.3rem">handoff</span>' : ''}
+    `;
+  }
+
+  const summary = document.getElementById('result-summary');
+  if (!data.blocked) {
+    summary.innerHTML = `
+      <p><strong>Respuesta:</strong></p>
+      <blockquote style="border-left:3px solid var(--color-primary);padding-left:.75rem;margin:.5rem 0;font-style:italic">
+        ${escHtml(data.response_preview)}
+      </blockquote>
+      <p style="color:var(--color-text-muted);font-size:.8rem">LLM calls: ${data.llm_calls} · Total: ${data.total_ms}ms</p>
+    `;
+  }
+
+  const traceEl = document.getElementById('trace');
+  traceEl.innerHTML = (data.trace || []).map(step => `
+    <div style="display:flex; align-items:flex-start; gap:.5rem; margin-bottom:.5rem; font-size:.85rem">
+      <span>${step.ok ? '✅' : '❌'}</span>
+      <div>
+        <strong>${step.step}</strong>
+        ${step.ms ? `<span class="badge badge-gray" style="margin-left:.3rem">${step.ms}ms</span>` : ''}
+        <br>
+        <code style="font-size:.75rem">${typeof step.detail === 'object' ? JSON.stringify(step.detail, null, 2) : escHtml(String(step.detail))}</code>
+      </div>
+    </div>
+  `).join('');
+
+  // Plan de humanización
+  const bc = document.getElementById('bubbles-card');
+  const be = document.getElementById('bubbles');
+  if (data.bubble_plan && data.bubble_plan.length > 0) {
+    bc.style.display = '';
+    const totalByChannel = data.bubble_plan.map(p => {
+      const total = p.bubbles.reduce((s, b) => s + b.typing_ms + b.pause_before_ms, 0);
+      return { ...p, total_ms: total };
+    });
+    be.innerHTML = `
+      <p style="font-size:.85rem;color:var(--color-text-muted);margin:0 0 .5rem">
+        Humanización: <b>${data.humanization_enabled ? 'ACTIVADA' : 'desactivada'}</b>.
+        ${data.humanization_enabled
+          ? 'Tiempos calculados (no se esperan en el simulador).'
+          : 'Estos son los tiempos <em>si</em> la activaras — útil para previsualizar.'}
+      </p>
+      ${totalByChannel.map(p => `
+        <div style="border:1px solid #e0e0e0; border-radius:8px; padding:.6rem .8rem; margin-bottom:.6rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
+            <strong>📡 ${escHtml(p.channel)}</strong>
+            <span class="badge ${p.applies ? 'badge-green' : 'badge-gray'}">
+              ${p.applies ? 'APLICA' : 'no aplica'} · ${p.bubbles.length} burbuja(s) · ${(p.total_ms/1000).toFixed(1)}s total
+            </span>
+          </div>
+          ${p.bubbles.map(b => `
+            <div style="font-size:.82rem;border-left:3px solid #5a9e5a;padding:.25rem .5rem;margin:.3rem 0;background:#fafafa">
+              <div style="color:#666">
+                ${b.i === 0 ? '—' : `+${b.pause_before_ms}ms pausa →`}
+                ⌨ ${b.typing_ms}ms "escribiendo…" →
+              </div>
+              <div>${escHtml(b.text)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('')}
+    `;
+  } else {
+    bc.style.display = 'none';
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+{% endblock %}

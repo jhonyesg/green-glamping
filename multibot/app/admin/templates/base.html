@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Multibot{% endblock %}</title>
+    <link rel="stylesheet" href="/admin/static/style.css?v=3">
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+</head>
+<body class="with-sidebar">
+    <aside class="sidebar">
+        <a class="sidebar-brand" href="/admin/">
+            <span class="brand-icon">🤖</span> Multibot
+        </a>
+        {% set role = request.session.get('role', 'client') %}
+        <nav class="sidebar-nav">
+            <a href="/admin/" class="{{ 'active' if request.url.path == '/admin/' else '' }}">
+                <span class="nav-icon">📊</span> Dashboard
+            </a>
+            {% if role == 'superadmin' %}
+            <a href="/admin/wizard" class="{{ 'active' if request.url.path.startswith('/admin/wizard') else '' }}">
+                <span class="nav-icon">➕</span> Nuevo tenant
+            </a>
+            {% endif %}
+            <a href="/admin/kb" class="{{ 'active' if request.url.path.startswith('/admin/kb') else '' }}">
+                <span class="nav-icon">📚</span> Base de conocimiento
+            </a>
+            <a href="/admin/conversations" class="{{ 'active' if request.url.path.startswith('/admin/conversations') else '' }}">
+                <span class="nav-icon">💬</span> Conversaciones
+            </a>
+            <a href="/admin/reservations" class="{{ 'active' if request.url.path.startswith('/admin/reservations') else '' }}">
+                <span class="nav-icon">🏕</span> Reservas
+            </a>
+            <a href="/admin/metrics" class="{{ 'active' if request.url.path.startswith('/admin/metrics') else '' }}">
+                <span class="nav-icon">📈</span> Métricas
+            </a>
+            <a href="/admin/simulate" class="{{ 'active' if request.url.path.startswith('/admin/simulate') else '' }}">
+                <span class="nav-icon">🧪</span> Simulador
+            </a>
+            <a href="/admin/flow" class="{{ 'active' if request.url.path.startswith('/admin/flow') else '' }}">
+                <span class="nav-icon">🔀</span> Flujo del bot
+            </a>
+            {% if role == 'superadmin' %}
+            <a href="/admin/channels" class="{{ 'active' if request.url.path.startswith('/admin/channels') else '' }}">
+                <span class="nav-icon">📡</span> Canales
+            </a>
+            <a href="/admin/llm" class="{{ 'active' if request.url.path.startswith('/admin/llm') else '' }}">
+                <span class="nav-icon">🧩</span> IA / LLM
+            </a>
+            <a href="/admin/plans" class="{{ 'active' if request.url.path.startswith('/admin/plans') else '' }}">
+                <span class="nav-icon">🛎</span> Servicios
+            </a>
+            <a href="/admin/media" class="{{ 'active' if request.url.path.startswith('/admin/media') else '' }}">
+                <span class="nav-icon">🖼</span> Media
+            </a>
+            <a href="/admin/tts" class="{{ 'active' if request.url.path.startswith('/admin/tts') else '' }}">
+                <span class="nav-icon">🔊</span> TTS
+            </a>
+            <a href="/admin/users" class="{{ 'active' if request.url.path.startswith('/admin/users') else '' }}">
+                <span class="nav-icon">👥</span> Usuarios
+            </a>
+            <a href="/admin/status" class="{{ 'active' if request.url.path.startswith('/admin/status') else '' }}">
+                <span class="nav-icon">🩺</span> Estado
+            </a>
+            <a href="/admin/settings" class="{{ 'active' if request.url.path.startswith('/admin/settings') else '' }}">
+                <span class="nav-icon">⚙️</span> Ajustes
+            </a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-footer">
+            {% if request.session.get('user') %}
+            <span class="sidebar-user">
+                👤 {{ request.session.get('user') }}
+                {% if role == 'client' and request.session.get('tenant_slug') %}
+                <br><small style="color:rgba(255,255,255,.6)">{{ request.session.get('tenant_slug') }}</small>
+                {% endif %}
+            </span>
+            <a href="/admin/logout" class="sidebar-logout">Cerrar sesión</a>
+            {% endif %}
+            <span class="sidebar-version">v{{ version | default('0.1.0') }}</span>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

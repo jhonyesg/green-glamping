@@ -1,0 +1,10 @@
+{
+  "name": "Demo Tenant",
+  "slug": "demo",
+  "operation_mode": "hybrid",
+  "plan_id": null,
+  "status": "active",
+  "channels": [],
+  "llm_providers": [],
+  "notes": "Demo tenant for development and testing"
+}

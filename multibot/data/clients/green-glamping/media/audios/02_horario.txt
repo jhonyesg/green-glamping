@@ -1,0 +1,7 @@
+=== AUDIO 02: HORARIO DE ATENCIÓN ===
+ID: audio_horario
+USO: Cuando el cliente escribe fuera de horario (8:00 a 17:00) o pregunta por horarios
+DURACIÓN APROX: 6 segundos
+
+TEXTO A GRABAR / TTS:
+"Gracias por tu mensaje. Atendemos de lunes a domingo de ocho de la mañana a cinco de la tarde. Te responderemos lo antes posible."

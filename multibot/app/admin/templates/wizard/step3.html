@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Nuevo tenant — Paso 3{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Nuevo tenant</h1></div>
+
+<div class="wizard-steps">
+  {% for num, label in steps %}
+  <div class="wizard-step {{ 'active' if current_step == num else 'done' if current_step > num else '' }}">
+    {{ num }}. {{ label }}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card" style="max-width:600px">
+  <h3>Paso 3 — Canal de comunicación</h3>
+  <form method="post" action="/admin/wizard/step/3">
+    <input type="hidden" name="slug" value="{{ slug }}">
+    <input type="hidden" name="name" value="{{ name }}">
+    <input type="hidden" name="operation_mode" value="{{ operation_mode }}">
+
+    <div class="form-group">
+      <label>Tipo de canal</label>
+      <select class="form-control" name="channel_type" onchange="toggleTokenField(this.value)">
+        <option value="telegram">Telegram</option>
+        <option value="whatsapp_official">WhatsApp oficial (próximamente)</option>
+        <option value="webchat">Webchat (próximamente)</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="token-field">
+      <label for="bot_token">Token del bot de Telegram</label>
+      <input class="form-control" id="bot_token" name="bot_token" type="text"
+             placeholder="123456:ABC-DEF..."
+             value="{{ bot_token | default('') }}">
+      <p class="form-hint">Obtén el token en @BotFather en Telegram</p>
+    </div>
+
+    <div class="form-actions">
+      <a href="/admin/wizard" class="btn btn-secondary">← Atrás</a>
+      <button class="btn btn-primary" type="submit">Continuar →</button>
+    </div>
+  </form>
+</div>
+
+<script>
+function toggleTokenField(val) {
+  document.getElementById('token-field').style.display = val === 'telegram' ? '' : 'none';
+}
+</script>
+{% endblock %}

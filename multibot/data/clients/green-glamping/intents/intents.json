@@ -1,0 +1,200 @@
+{
+  "version": "1.0",
+  "description": "Intents reconocidos por el clasificador del bot. El campo examples se usa como few-shot para el LLM clasificador en n8n.",
+  "intents": {
+    "saludo": {
+      "description": "Cliente inicia la conversación o saluda sin pedir nada concreto. Disparar AUDIO 01 (bienvenida).",
+      "examples": [
+        "Hola",
+        "Hola buen día",
+        "Buenos días",
+        "Buenas tardes",
+        "Buenas noches",
+        "Qué tal",
+        "Hola, quiero información",
+        "Hola, me interesa",
+        "Hola buenas",
+        "Cordial saludo"
+      ],
+      "audio_response": "01_bienvenida",
+      "tts_required": false
+    },
+    "fuera_de_horario": {
+      "description": "Mensaje recibido fuera del horario 8:00-17:00 o consulta por horarios. Disparar AUDIO 02.",
+      "examples": [
+        "A qué hora atienden",
+        "Cuál es el horario",
+        "Están abiertos ahora",
+        "Hasta qué hora atienden",
+        "Mañana a qué hora abren"
+      ],
+      "audio_response": "02_horario",
+      "tts_required": false
+    },
+    "ubicacion": {
+      "description": "Cliente pregunta dónde queda, cómo llegar o pide la dirección. Disparar AUDIO 03.",
+      "examples": [
+        "Dónde están",
+        "Ubicación",
+        "Cómo llego",
+        "Me regalas la ubicación",
+        "Dirección",
+        "Quedan lejos",
+        "Cómo hago para llegar",
+        "Tienen sede en Bogotá"
+      ],
+      "audio_response": "03_ubicacion",
+      "tts_required": false
+    },
+    "info_servicios": {
+      "description": "Cliente quiere conocer los servicios, combos o qué se ofrece. Responder con texto corto + TTS si supera 80 chars.",
+      "examples": [
+        "Qué servicios tienen",
+        "Qué combos manejan",
+        "Muéstrame los planes",
+        "Qué incluye",
+        "Cómo funciona el parapente",
+        "Cómo es el glamping",
+        "Qué diferencia hay entre los glamping",
+        "Tienen spa",
+        "Qué planes hay para aniversario"
+      ],
+      "audio_response": null,
+      "tts_required": "auto"
+    },
+    "precio": {
+      "description": "Cliente pregunta por precios de un combo o servicio.",
+      "examples": [
+        "Cuánto cuesta",
+        "Cuál es el precio",
+        "Valor del combo",
+        "Precio del parapente",
+        "Cuánto sale",
+        "Tienen precios"
+      ],
+      "audio_response": null,
+      "tts_required": "auto"
+    },
+    "disponibilidad": {
+      "description": "Cliente pregunta si hay disponibilidad para una fecha específica.",
+      "examples": [
+        "Tienen disponibilidad para el sábado 27",
+        "Hay cupo para el 7 de junio",
+        "Están disponibles el domingo",
+        "Puedo ir el 20 de junio",
+        "Tienen libre el próximo fin de semana"
+      ],
+      "audio_response": null,
+      "tts_required": "auto"
+    },
+    "como_reservar": {
+      "description": "Cliente pregunta cómo reservar, cómo apartar, cómo pagar. Disparar AUDIO 04.",
+      "examples": [
+        "Cómo reservo",
+        "Cómo aparto",
+        "Cómo pago",
+        "Cómo funciona la reserva",
+        "Con cuánto se aparta",
+        "Cómo hago para apartar la fecha"
+      ],
+      "audio_response": "04_como_reservar",
+      "tts_required": false
+    },
+    "datos_pago": {
+      "description": "Cliente pregunta por los medios de pago, números de cuenta o titular.",
+      "examples": [
+        "Me regalas los datos de pago",
+        "Nequi de ustedes",
+        "Cuál es la cuenta",
+        "A nombre de quién",
+        "Tienen datáfono",
+        "Puedo pagar con tarjeta"
+      ],
+      "audio_response": null,
+      "tts_required": "auto"
+    },
+    "seleccion_combo": {
+      "description": "Cliente eligió un combo o plan. Se debe confirmar y avanzar a fecha.",
+      "examples": [
+        "Me interesa el combo 7",
+        "Quiero el combo aniversario",
+        "Combo 5 con spa",
+        "Me gusta el plan de cumpleaños",
+        "Quiero el de parapente"
+      ],
+      "audio_response": null,
+      "tts_required": "auto",
+      "siguiente_paso": "preguntar_fecha"
+    },
+    "seleccion_fecha": {
+      "description": "Cliente da una fecha tentativa. Se confirma disponibilidad y se ofrece handoff.",
+      "examples": [
+        "Para el 7 de junio",
+        "Sábado 27 de junio",
+        "El domingo que viene",
+        "Entrando 7 y saliendo 8",
+        "Para el 20 de junio"
+      ],
+      "audio_response": null,
+      "tts_required": "auto",
+      "siguiente_paso": "confirmar_y_ofrecer_handoff"
+    },
+    "datos_cliente": {
+      "description": "Cliente envía sus datos personales para confirmar la reserva.",
+      "examples": [
+        "Nombre: Juan Pérez, CC 1234567890, tel 3001234567",
+        "Aquí van mis datos",
+        "Le envío la información"
+      ],
+      "audio_response": null,
+      "tts_required": "auto",
+      "siguiente_paso": "handoff"
+    },
+    "despedida": {
+      "description": "Cliente cierra la conversación amablemente. Disparar AUDIO 05.",
+      "examples": [
+        "Gracias",
+        "Muchas gracias",
+        "Ok perfecto",
+        "Listo",
+        "Mil gracias",
+        "Chao",
+        "Hasta luego"
+      ],
+      "audio_response": "05_despedida",
+      "tts_required": false
+    },
+    "hablar_humano": {
+      "description": "Cliente pide hablar con una persona real. Disparar handoff inmediato + AUDIO 06.",
+      "examples": [
+        "Quiero hablar con una persona",
+        "Me pasas con un asesor",
+        "Hay otro número",
+        "Necesito atención personalizada",
+        "Quiero que me llamen"
+      ],
+      "audio_response": "06_handoff",
+      "tts_required": false,
+      "handoff": true
+    },
+    "queja": {
+      "description": "Cliente reporta un problema o está molesto. Escalar a humano sin demora.",
+      "examples": [
+        "Esto es un robo",
+        "No me han contestado",
+        "Pésimo servicio",
+        "Quiero una queja formal"
+      ],
+      "audio_response": null,
+      "tts_required": false,
+      "handoff": true
+    },
+    "otro": {
+      "description": "Mensaje que no encaja en ningún intent. Responder con LLM genérico o escalar.",
+      "examples": [],
+      "audio_response": null,
+      "tts_required": "auto",
+      "handoff": false
+    }
+  }
+}

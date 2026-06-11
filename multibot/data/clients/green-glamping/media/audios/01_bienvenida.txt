@@ -1,0 +1,9 @@
+=== AUDIO 01: BIENVENIDA / SALUDO ===
+ID: audio_bienvenida
+USO: Primer mensaje del cliente (hola, buenos días, buenas tardes, buenas noches, qué tal, info)
+DURACIÓN APROX: 8 segundos
+FORMATO RECOMENDADO: ogg/opus para WhatsApp, mono 16kHz
+IMPORTANTE: Hablar en primera persona. NUNCA decir "soy bot", "soy asistente virtual" ni "soy un programa".
+
+TEXTO A GRABAR / TTS:
+"¡Hola! Bienvenido a Green Glamping Chipaque y Parapente Volando con Tatan. Cuéntanos, ¿qué plan te gustaría conocer?"
