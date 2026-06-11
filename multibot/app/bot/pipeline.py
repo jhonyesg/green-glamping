@@ -276,7 +276,7 @@ async def process(
     t0 = time.monotonic()
     if classification.handoff_rule and classification.requires_human:
         if dry_run:
-            add_trace("handoff", True, f"would trigger {classification.handoff_rule} (dry_run)", 0)
+            add_trace("handoff", True, f"would trigger {classification.handoff_rule} (dry_run)", int((time.monotonic() - t0) * 1000))
             logger.info(f"[dry_run] would trigger handoff: rule={classification.handoff_rule} intent={classification.intent_name}")
         else:
             await trigger_handoff(
