@@ -98,7 +98,7 @@ function renderResult(data) {
     badge.innerHTML = '<span class="badge badge-red">BLOQUEADO</span>';
   } else {
     badge.innerHTML = `
-      <span class="badge badge-green">${data.intent}</span>
+      <span class="badge badge-green">${data.intent || '—'}</span>
       <span class="badge badge-gray" style="margin-left:.3rem">${data.total_ms}ms</span>
       ${data.requires_human ? '<span class="badge badge-orange" style="margin-left:.3rem">handoff</span>' : ''}
     `;
@@ -122,10 +122,10 @@ function renderResult(data) {
     <div style="display:flex; align-items:flex-start; gap:.5rem; margin-bottom:.5rem; font-size:.85rem">
       <span>${step.ok ? '✅' : '❌'}</span>
       <div>
-        <strong>${step.step}</strong>
-        ${step.ms ? `<span class="badge badge-gray" style="margin-left:.3rem">${step.ms}ms</span>` : ''}
+        <strong>${step.step || '?'}</strong>
+        ${step.ms != null ? `<span class="badge badge-gray" style="margin-left:.3rem">${step.ms}ms</span>` : ''}
         <br>
-        <code style="font-size:.75rem">${typeof step.detail === 'object' ? JSON.stringify(step.detail, null, 2) : escHtml(String(step.detail))}</code>
+        <code style="font-size:.75rem">${typeof step.detail === 'object' ? JSON.stringify(step.detail, null, 2) : escHtml(String(step.detail ?? ''))}</code>
       </div>
     </div>
   `).join('');
@@ -172,7 +172,8 @@ function renderResult(data) {
 }
 
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
 {% endblock %}
