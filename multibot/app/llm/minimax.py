@@ -10,7 +10,7 @@ import time
 import httpx
 from loguru import logger
 
-from app.llm.base import LLMProvider, LLMRequest, LLMResponse, STTRequest, STTResponse
+from app.llm.base import LLMRequest, LLMResponse, STTRequest, STTResponse
 
 # Candidatos en orden: plataforma nueva primero (cuentas recientes / modelos M*)
 CHAT_URL_CANDIDATES = [
@@ -53,9 +53,19 @@ class MiniMaxAdapter:
 
     async def complete(self, request: LLMRequest) -> LLMResponse:
         model = request.model or self._model
+        # Construir messages: si el request viene con
+        # system+user_prompt, armar messages. Si viene con messages, usarlos.
+        if request.messages:
+            messages = [{"role": m.role, "content": m.content} for m in request.messages]
+        else:
+            messages = []
+            if request.system_prompt:
+                messages.append({"role": "system", "content": request.system_prompt})
+            if request.user_prompt:
+                messages.append({"role": "user", "content": request.user_prompt})
         payload = {
             "model": model,
-            "messages": [{"role": m.role, "content": m.content} for m in request.messages],
+            "messages": messages,
             "max_tokens": request.max_tokens,
             "temperature": request.temperature,
         }

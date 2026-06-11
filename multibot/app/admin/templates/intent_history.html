@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Historial de {{ intent_name }}{% endblock %}
+{% block content %}
+<style>
+  .timeline { border-left: 2px solid #e5e7eb; margin-left: 1rem; padding-left: 1.5rem; }
+  .version-item { position: relative; margin-bottom: 1.5rem; }
+  .version-item::before {
+    content: ""; position: absolute; left: -1.6rem; top: .5rem;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--color-primary);
+  }
+  .version-current { background: #d1fae5; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+  .version-old { background: #f9fafb; padding: 1rem; border-radius: 8px; }
+  .version-meta { font-size: .8rem; color: #6b7280; margin-bottom: .5rem; }
+  .version-field { margin-bottom: .3rem; font-size: .9rem; }
+  .version-field strong { display: inline-block; min-width: 110px; }
+</style>
+
+<div class="page-header">
+  <h1>Historial: <code>{{ intent_name }}</code></h1>
+  <p class="subtitle">
+    <a href="/admin/kb?tenant={{ tenant }}">← volver a intents</a>
+  </p>
+</div>
+
+{% if saved %}
+<div class="alert alert-success">✓ Versión {{ saved }} aplicada.</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-error">⚠ {{ error }}</div>
+{% endif %}
+
+{% if current %}
+<div class="version-current">
+  <h3 style="margin-top:0">🟢 Versión actual (en BD)</h3>
+  <div class="version-field"><strong>Keywords:</strong> <code>{{ current.keywords_regex }}</code></div>
+  <div class="version-field"><strong>Response:</strong> <small>{{ current.response_text[:200] }}{% if current.response_text | length > 200 %}…{% endif %}</small></div>
+  <div class="version-field"><strong>Tipo:</strong> {{ current.response_type }} · <strong>Status:</strong> {{ current.status }} · <strong>Source:</strong> {{ current.source }}</div>
+</div>
+{% else %}
+<div class="alert alert-error">Intent "{{ intent_name }}" no existe actualmente.</div>
+{% endif %}
+
+<h3 style="margin-top:2rem">Historial de cambios</h3>
+{% if versions %}
+<div class="timeline">
+  {% for v in versions %}
+  <div class="version-item">
+    <div class="version-old">
+      <div class="version-meta">
+        <strong>#{{ v.id }}</strong> ·
+        <span class="badge badge-gray">{{ v.source }}</span> ·
+        {{ v.created_at.strftime('%Y-%m-%d %H:%M:%S') if v.created_at else '—' }}
+        {% if v.reverted_from %} · <em>revertido desde #{{ v.reverted_from }}</em>{% endif %}
+      </div>
+      <div class="version-field">
+        <strong>Keywords:</strong>
+        <code style="font-size:.78rem">{{ v.snapshot.get('keywords_regex', '—') }}</code>
+      </div>
+      <div class="version-field">
+        <strong>Response:</strong>
+        <small>{{ (v.snapshot.get('response_text', '') or '')[:200] }}{% if (v.snapshot.get('response_text') or '') | length > 200 %}…{% endif %}</small>
+      </div>
+      <form method="post" action="/admin/intents/{{ intent_name }}/revert/{{ v.id }}"
+            style="margin-top:.5rem"
+            onsubmit="return confirm('¿Revertir el intent a este estado? El estado actual se guardará como nueva versión.')">
+        <input type="hidden" name="tenant" value="{{ tenant }}">
+        <button class="btn btn-secondary" type="submit" style="padding:.25rem .6rem;font-size:.75rem">
+          ⏪ Revertir a esta versión
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p style="color:#6b7280;margin-top:1rem">No hay versiones previas registradas.</p>
+{% endif %}
+
+<p class="form-hint" style="margin-top:2rem">
+  💡 Cada vez que el auto-learner aprueba una propuesta o que
+  un admin edita un intent, se guarda un snapshot automático.
+  Esto permite revertir a cualquier estado anterior.
+</p>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}LLM Strategy — {{ tenant }}{% endblock %}
+{% block content %}
+<style>
+  .strategy-card { background: white; padding: 1.25rem; border-radius: 10px; border: 1px solid #e5e7eb; margin-bottom: 1rem; }
+  .strategy-card h3 { margin: 0 0 1rem; }
+  .form-row { margin-bottom: 1rem; }
+  .form-row label { display: block; font-weight: 600; margin-bottom: .3rem; font-size: .9rem; }
+  .form-row .hint { color: #6b7280; font-size: .8rem; margin-top: .25rem; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .info-box { background: #dbeafe; border: 1px solid #93c5fd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-size: .9rem; }
+  @media (max-width:700px) { .grid-2 { grid-template-columns:1fr; } }
+</style>
+
+<div class="page-header">
+  <h1>⚙️ LLM Strategy
+    <select class="form-control" style="display:inline-block;width:auto;padding:.2rem .5rem;font-size:.6em;vertical-align:middle"
+            onchange="location.href='/admin/llm/strategy?tenant='+this.value">
+      {% for t in tenants %}
+      <option value="{{ t }}" {% if t == tenant %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+  </h1>
+  <p class="subtitle">Configuración del modo de generación de respuestas (LLM-first vs legacy regex-first).</p>
+</div>
+
+{% if saved %}
+<div class="alert alert-success">✓ Configuración guardada.</div>
+{% endif %}
+
+<div class="info-box">
+  <strong>📚 LLM-first (nuevo):</strong> el bot invoca al LLM en cada mensaje y la
+  IA genera la respuesta usando la KB como contexto. Permite auto-mejora.
+  <br><strong>📜 regex-first (legacy):</strong> el bot matchea intents por regex y
+  usa respuestas hardcodeadas. Cero gasto de tokens, 0% de variabilidad.
+</div>
+
+<form method="post" action="/admin/llm/strategy">
+  <input type="hidden" name="tenant" value="{{ tenant }}">
+
+  <div class="strategy-card">
+    <h3>Modo de operación</h3>
+    <div class="form-row">
+      <label>Modo</label>
+      <select class="form-control" name="mode">
+        <option value="regex_first" {% if current.mode == 'regex_first' %}selected{% endif %}>
+          regex_first (legacy, sin LLM en runtime)
+        </option>
+        <option value="llm_first" {% if current.mode == 'llm_first' %}selected{% endif %}>
+          llm_first (IA genera cada respuesta)
+        </option>
+      </select>
+      <p class="hint">Si tenés un LLM provider configurado, podés activar llm_first.
+      Si no, el sistema cae automáticamente a regex_first.</p>
+    </div>
+  </div>
+
+  <div class="strategy-card">
+    <h3>Optimización: bypass del LLM con regex de alta confianza</h3>
+    <div class="form-row">
+      <label>
+        <input type="checkbox" name="bypass_enabled" value="true"
+               {% if current.bypass_llm_on_high_regex_score %}checked{% endif %}>
+        Activar bypass (ahorrar tokens cuando el regex matchea claro)
+      </label>
+    </div>
+    <div class="form-row">
+      <label>Threshold del bypass (0.0 - 1.0)</label>
+      <input class="form-control" type="number" min="0" max="1" step="0.05"
+             name="bypass_threshold" value="{{ current.bypass_threshold }}">
+      <p class="hint">Más alto = más restrictivo (solo regex MUY claros evitan el LLM).
+      Recomendado: 0.9 (default).</p>
+    </div>
+  </div>
+
+  <div class="strategy-card">
+    <h3>Límites de gasto (protección contra uso excesivo)</h3>
+    <div class="grid-2">
+      <div class="form-row">
+        <label>Max llamadas LLM por mensaje</label>
+        <input class="form-control" type="number" min="0" name="max_calls_per_message"
+               value="{{ current.max_llm_calls_per_message }}">
+        <p class="hint">0 = nunca. 1 = máximo una llamada por mensaje (recomendado).</p>
+      </div>
+      <div class="form-row">
+        <label>Max llamadas LLM por conversación/hora</label>
+        <input class="form-control" type="number" min="0" name="max_calls_per_hour"
+               value="{{ current.max_llm_calls_per_conversation_per_hour }}">
+        <p class="hint">20 = 20 invocaciones por hora por conversación.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="strategy-card">
+    <h3>🧠 Auto-learner (genera propuestas de mejora)</h3>
+    <div class="form-row">
+      <label>
+        <input type="checkbox" name="auto_learner_enabled" value="true"
+               {% if current.auto_learner.enabled %}checked{% endif %}>
+        Activar auto-learner
+      </label>
+    </div>
+    <div class="grid-2">
+      <div class="form-row">
+        <label>Frecuencia del análisis</label>
+        <select class="form-control" name="auto_learner_schedule">
+          <option value="manual" {% if current.auto_learner.schedule == 'manual' %}selected{% endif %}>Manual</option>
+          <option value="every_6_hours" {% if current.auto_learner.schedule == 'every_6_hours' %}selected{% endif %}>Cada 6 horas</option>
+          <option value="every_24_hours" {% if current.auto_learner.schedule == 'every_24_hours' %}selected{% endif %}>Cada 24 horas</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Mín. mensajes por cluster</label>
+        <input class="form-control" type="number" min="2" name="auto_learner_min_cluster"
+               value="{{ current.auto_learner.min_messages_per_cluster }}">
+        <p class="hint">Mínimo de mensajes similares para proponer un intent nuevo.</p>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" type="submit" style="padding:.6rem 1.5rem">Guardar configuración</button>
+  <a class="btn btn-secondary" href="/admin/llm?tenant={{ tenant }}" style="margin-left:.5rem">← Volver a LLM</a>
+</form>
+{% endblock %}

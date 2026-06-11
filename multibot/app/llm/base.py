@@ -12,12 +12,20 @@ class LLMMessage:
 
 @dataclass
 class LLMRequest:
-    messages: list[LLMMessage]
+    # Soporta dos formas: messages (chat) o system+user_prompt (1-shot).
+    # El router arma el formato correcto para cada provider.
+    messages: list[LLMMessage] = field(default_factory=list)
+    system_prompt: str = ""
+    user_prompt: str = ""
     model: str = ""
     max_tokens: int = 512
     temperature: float = 0.3
     tenant_id: int = 0
     conversation_id: int | None = None
+    # Si está set, el provider intenta forzar JSON output.
+    # En OpenAI-compat: response_format={"type": "json_object"}.
+    # En otros: se omite silenciosamente si no se soporta.
+    response_format: str | None = None  # "json_object" | None
 
 
 @dataclass

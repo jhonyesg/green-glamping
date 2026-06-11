@@ -8,6 +8,30 @@ from app.core.security import decrypt_credentials
 from app.llm.base import LLMProvider, LLMRequest, LLMResponse, STTRequest, STTResponse
 
 
+async def route_response_generation(
+    system_prompt: str,
+    user_prompt: str,
+    tenant_id: int,
+    session: AsyncSession,
+    *,
+    temperature: float = 0.3,
+    max_tokens: int = 800,
+) -> LLMResponse:
+    """
+    Wrapper específico para generación de respuesta JSON estructurada.
+    Es route_llm con un request armado y temperatura baja.
+    """
+    request = LLMRequest(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        response_format="json_object",
+        tenant_id=tenant_id,
+    )
+    return await route_llm(request, session)
+
+
 def _build_provider(provider_name: str, model: str, api_key: str, base_url: str, capabilities: dict) -> LLMProvider:
     if provider_name == "minimax":
         from app.llm.minimax import MiniMaxAdapter

@@ -91,6 +91,10 @@
 
     <div class="form-actions">
       <a href="/admin/kb?tenant={{ tenant }}" class="btn btn-secondary">Cancelar</a>
+      {% if intent and intent.intent_name %}
+      <a href="/admin/intents/{{ intent.intent_name }}/history?tenant={{ tenant }}"
+         class="btn btn-secondary">⏪ Historial</a>
+      {% endif %}
       <button class="btn btn-primary" type="submit">
         {{ 'Guardar cambios' if intent else 'Crear intent' }}
       </button>

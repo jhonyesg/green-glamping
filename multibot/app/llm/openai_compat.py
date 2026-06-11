@@ -5,7 +5,7 @@ import time
 import httpx
 from loguru import logger
 
-from app.llm.base import LLMProvider, LLMRequest, LLMResponse, STTRequest, STTResponse
+from app.llm.base import LLMRequest, LLMResponse, STTRequest, STTResponse
 
 OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 OPENAI_STT_URL = "https://api.openai.com/v1/audio/transcriptions"
@@ -35,12 +35,25 @@ class OpenAICompatAdapter:
 
     async def complete(self, request: LLMRequest) -> LLMResponse:
         model = request.model or self._model
+        # Construir messages: si el request viene con
+        # system+user_prompt (formato 1-shot), armar messages.
+        # Si viene con messages (formato chat), usarlos directo.
+        if request.messages:
+            messages = [{"role": m.role, "content": m.content} for m in request.messages]
+        else:
+            messages = []
+            if request.system_prompt:
+                messages.append({"role": "system", "content": request.system_prompt})
+            if request.user_prompt:
+                messages.append({"role": "user", "content": request.user_prompt})
         payload = {
             "model": model,
-            "messages": [{"role": m.role, "content": m.content} for m in request.messages],
+            "messages": messages,
             "max_tokens": request.max_tokens,
             "temperature": request.temperature,
         }
+        if request.response_format == "json_object":
+            payload["response_format"] = {"type": "json_object"}
         headers = {
             "Authorization": f"Bearer {self._api_key}",
             "Content-Type": "application/json",

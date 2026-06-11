@@ -8,8 +8,8 @@ Agrega a kb_intents (en cada schema de tenant):
   cuando el intent matchea. Backfill: si response_audio_id está set,
   se agrega al array.
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 
 revision = "004"

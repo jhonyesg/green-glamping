@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Learner — {{ tenant }}{% endblock %}
+{% block content %}
+<style>
+  .proposal-card {
+    background: white; border: 1px solid #e5e7eb; border-radius: 10px;
+    padding: 1rem 1.25rem; margin-bottom: 1rem;
+  }
+  .badge-create { background: #d1fae5; color: #047857; }
+  .badge-update { background: #fef3c7; color: #92400e; }
+  .badge-deprecate { background: #fee2e2; color: #c92a2a; }
+  .badge-status-pending { background: #dbeafe; color: #1e40af; }
+  .badge-status-applied { background: #d1fae5; color: #047857; }
+  .badge-status-rejected { background: #e5e7eb; color: #6b7280; }
+  .sample-msg {
+    background: #f9fafb; padding: .4rem .7rem; border-radius: 6px;
+    font-size: .85rem; margin-bottom: .3rem; color: #4b5563;
+  }
+  .filter-tabs { margin-bottom: 1rem; }
+  .filter-tabs a {
+    padding: .35rem .85rem; border-radius: 6px; margin-right: .4rem;
+    text-decoration: none; background: #f3f4f6; color: #374151;
+  }
+  .filter-tabs a.active { background: var(--color-primary); color: white; }
+</style>
+
+<div class="page-header">
+  <h1>📚 Auto-learner
+    <select class="form-control" style="display:inline-block;width:auto;padding:.2rem .5rem;font-size:.6em;vertical-align:middle"
+            onchange="location.href='/admin/learner?tenant='+this.value+'&status={{ status_filter }}'">
+      {% for t in tenants %}
+      <option value="{{ t }}" {% if t == tenant %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+  </h1>
+  <p class="subtitle">Propuestas generadas por análisis batch de conversaciones reales.</p>
+</div>
+
+{% if saved %}
+<div class="alert alert-success">✓ Proposal {{ saved }}.</div>
+{% endif %}
+
+<div class="filter-tabs">
+  <a href="?tenant={{ tenant }}&status=pending" class="{% if status_filter == 'pending' %}active{% endif %}">Pendientes</a>
+  <a href="?tenant={{ tenant }}&status=applied" class="{% if status_filter == 'applied' %}active{% endif %}">Aplicadas</a>
+  <a href="?tenant={{ tenant }}&status=rejected" class="{% if status_filter == 'rejected' %}active{% endif %}">Rechazadas</a>
+  <a href="?tenant={{ tenant }}&status=applied_edited" class="{% if status_filter == 'applied_edited' %}active{% endif %}">Aplicadas con edición</a>
+</div>
+
+{% if proposals %}
+{% for p in proposals %}
+<div class="proposal-card">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <span class="badge badge-{{ p.kind }}">{{ p.kind }}</span>
+      <strong style="margin-left:.5rem">
+        {% if p.kind == 'create_intent' %}
+          {{ p.payload.get('intent_name', '?') }}
+        {% elif p.kind == 'update_intent' %}
+          Actualizar: {{ p.payload.get('intent_name', '?') }}
+        {% elif p.kind == 'deprecate_intent' %}
+          Deprecar: {{ p.payload.get('to_remove', '?') }}
+        {% endif %}
+      </strong>
+      <span class="badge badge-status-{{ p.status }}">{{ p.status }}</span>
+      {% if p.confidence %}<small style="color:#6b7280">confianza: {{ "%.0f" | format((p.confidence or 0) * 100) }}%</small>{% endif %}
+    </div>
+    <small style="color:#9ca3af">{{ p.proposed_at.strftime('%Y-%m-%d %H:%M') if p.proposed_at else '—' }}</small>
+  </div>
+
+  <div style="margin-top:.5rem">
+    {% for msg in p.sample_messages[:3] %}
+    <div class="sample-msg">"{{ msg }}"</div>
+    {% endfor %}
+  </div>
+
+  <div style="margin-top:.75rem;display:flex;gap:.4rem">
+    <a class="btn btn-secondary" href="/admin/learner/{{ p.id }}?tenant={{ tenant }}"
+       style="padding:.3rem .7rem;font-size:.78rem">👁 Ver diff completo</a>
+    {% if p.status == 'pending' %}
+    <form method="post" action="/admin/learner/{{ p.id }}/approve" style="display:inline">
+      <input type="hidden" name="tenant" value="{{ tenant }}">
+      <button class="btn btn-primary" type="submit" style="padding:.3rem .7rem;font-size:.78rem"
+              onclick="return confirm('¿Aprobar y aplicar esta propuesta?')">
+        ✓ Aprobar
+      </button>
+    </form>
+    <form method="post" action="/admin/learner/{{ p.id }}/reject" style="display:inline">
+      <input type="hidden" name="tenant" value="{{ tenant }}">
+      <button class="btn btn-secondary" type="submit" style="padding:.3rem .7rem;font-size:.78rem;color:#c92a2a"
+              onclick="return confirm('¿Rechazar esta propuesta?')">
+        ✕ Rechazar
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="card" style="text-align:center;padding:3rem 1rem;color:#6b7280">
+  <p style="font-size:1.05rem;margin:0 0 .5rem">No hay propuestas {{ status_filter }}.</p>
+  <p style="font-size:.85rem;margin:0">El learner genera propuestas automáticamente cada 6h
+  cuando detecta clusters de mensajes sin clasificar.</p>
+  <p style="font-size:.8rem;margin-top:1rem;color:#9ca3af">
+    Para forzar un análisis ahora:
+    <code>python -m scripts.run_learner --tenant={{ tenant }}</code>
+  </p>
+</div>
+{% endif %}
+{% endblock %}

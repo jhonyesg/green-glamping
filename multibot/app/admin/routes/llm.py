@@ -1,5 +1,6 @@
 """LLM provider management (superadmin): configure AI providers per tenant."""
 
+import json
 from pathlib import Path
 
 import sqlalchemy as sa
@@ -201,3 +202,89 @@ async def llm_delete(request: Request, provider_id: int, tenant: str = "green-gl
         )
         await session.commit()
     return RedirectResponse(f"/admin/llm?tenant={tenant}", status_code=303)
+
+
+# ── LLM Strategy (config del modo llm_first) ──
+
+DEFAULT_LLM_STRATEGY = {
+    "mode": "regex_first",
+    "bypass_llm_on_high_regex_score": True,
+    "bypass_threshold": 0.9,
+    "max_llm_calls_per_message": 1,
+    "max_llm_calls_per_conversation_per_hour": 20,
+    "auto_learner": {
+        "enabled": True,
+        "schedule": "every_6_hours",
+        "min_messages_per_cluster": 3,
+    },
+}
+
+
+@router.get("/strategy", response_class=HTMLResponse)
+async def llm_strategy_form(request: Request, tenant: str = "green-glamping"):
+    """Form para editar la config llm_strategy del bot_config del tenant."""
+    async with async_session_factory() as session:
+        await session.execute(sa.text('SET search_path TO "public"'))
+        row = (await session.execute(
+            sa.text("SELECT bot_config FROM public.tenants WHERE slug=:s"),
+            {"s": tenant},
+        )).fetchone()
+        bot_config = row[0] if row and row[0] else {}
+        tenants = (await session.execute(
+            sa.text("SELECT slug FROM public.tenants WHERE status='active' ORDER BY slug")
+        )).fetchall()
+
+    current = (bot_config or {}).get("llm_strategy") or DEFAULT_LLM_STRATEGY
+    return templates.TemplateResponse(request, "llm/strategy.html", {
+        "tenant": tenant,
+        "tenants": [t[0] for t in tenants],
+        "current": current,
+        "saved": request.query_params.get("saved"),
+    })
+
+
+@router.post("/strategy")
+async def llm_strategy_save(
+    request: Request,
+    tenant: str = Form(...),
+    mode: str = Form("regex_first"),
+    bypass_enabled: str = Form("false"),
+    bypass_threshold: float = Form(0.9),
+    max_calls_per_message: int = Form(1),
+    max_calls_per_hour: int = Form(20),
+    auto_learner_enabled: str = Form("true"),
+    auto_learner_schedule: str = Form("every_6_hours"),
+    auto_learner_min_cluster: int = Form(3),
+):
+    """Guarda la config llm_strategy en bot_config del tenant."""
+    strategy = {
+        "mode": mode,
+        "bypass_llm_on_high_regex_score": bypass_enabled == "true",
+        "bypass_threshold": max(0.0, min(1.0, bypass_threshold)),
+        "max_llm_calls_per_message": max(0, max_calls_per_message),
+        "max_llm_calls_per_conversation_per_hour": max(0, max_calls_per_hour),
+        "auto_learner": {
+            "enabled": auto_learner_enabled == "true",
+            "schedule": auto_learner_schedule,
+            "min_messages_per_cluster": max(2, auto_learner_min_cluster),
+        },
+    }
+
+    async with async_session_factory() as session:
+        await session.execute(sa.text('SET search_path TO "public"'))
+        row = (await session.execute(
+            sa.text("SELECT bot_config FROM public.tenants WHERE slug=:s"),
+            {"s": tenant},
+        )).fetchone()
+        bot_config = dict(row[0] or {})
+        bot_config["llm_strategy"] = strategy
+        await session.execute(
+            sa.text("UPDATE public.tenants SET bot_config=CAST(:c AS jsonb) WHERE slug=:s"),
+            {"c": json.dumps(bot_config, ensure_ascii=False),
+             "s": tenant},
+        )
+        await session.commit()
+
+    return RedirectResponse(
+        f"/admin/llm/strategy?tenant={tenant}&saved=ok", status_code=303
+    )

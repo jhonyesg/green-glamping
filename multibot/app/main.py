@@ -26,6 +26,8 @@ from app.admin.routes.channels import router as channels_router
 from app.admin.routes.settings import router as settings_router
 from app.admin.routes.plans import router as plans_router, services_alias, api_router as plans_api_router
 from app.admin.routes.media import router as media_router, api_router as media_api_router
+from app.admin.routes.learner import router as learner_router
+from app.admin.routes.intent_history import router as intent_history_router
 from app.mcp.server import router as mcp_router
 from app.config import get_settings
 from app.core.logging import setup_logging
@@ -170,6 +172,8 @@ app.include_router(settings_router)
 app.include_router(plans_router)
 app.include_router(services_alias)
 app.include_router(media_router)
+app.include_router(learner_router)
+app.include_router(intent_history_router)
 app.include_router(plans_api_router)
 app.include_router(media_api_router)
 app.include_router(mcp_router)

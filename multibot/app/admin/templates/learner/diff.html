@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Diff propuesta #{{ proposal.id }}{% endblock %}
+{% block content %}
+<style>
+  .diff-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+  .diff-panel { background:white; border:1px solid #e5e7eb; border-radius:8px; padding:1rem; }
+  .diff-panel h3 { margin:0 0 .5rem; font-size:.9rem; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; }
+  .diff-panel.current { border-left:3px solid #f59e0b; }
+  .diff-panel.proposed { border-left:3px solid #10b981; }
+  .diff-text { background:#f9fafb; padding:.7rem; border-radius:6px; font-size:.9rem; white-space:pre-wrap; line-height:1.5; }
+  .samples-box { background:#fef3c7; border:1px solid #fcd34d; border-radius:8px; padding:1rem; margin-bottom:1rem; }
+  .sample-msg { background:white; padding:.5rem .75rem; border-radius:6px; margin-bottom:.4rem; font-size:.9rem; }
+  .form-row { margin-bottom:.8rem; }
+  .form-row label { display:block; font-weight:600; margin-bottom:.25rem; font-size:.9rem; }
+  .form-row input, .form-row textarea { width:100%; }
+  @media (max-width:700px) { .diff-grid { grid-template-columns:1fr; } }
+</style>
+
+<div class="page-header">
+  <h1>Propuesta #{{ proposal.id }}
+    <span class="badge badge-{{ proposal.kind }}">{{ proposal.kind }}</span>
+    <span class="badge badge-status-{{ proposal.status }}">{{ proposal.status }}</span>
+  </h1>
+  <p class="subtitle"><a href="/admin/learner?tenant={{ tenant }}">volver a la lista</a></p>
+</div>
+
+<div class="samples-box">
+  <strong style="font-size:.85rem;color:#92400e">Mensajes que motivaron la propuesta ({{ proposal.sample_messages | length }})</strong>
+  <div style="margin-top:.5rem">
+    {% for msg in proposal.sample_messages %}
+    <div class="sample-msg">"{{ msg }}"</div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if proposal.kind in ['update_intent', 'deprecate_intent'] %}
+<div class="diff-grid">
+  <div class="diff-panel current">
+    <h3>Estado actual (en BD)</h3>
+    {% if current_intent %}
+    <div class="form-row">
+      <label>Intent name</label>
+      <input class="form-control" value="{{ current_intent.intent_name }}" disabled>
+    </div>
+    <div class="form-row">
+      <label>Keywords regex</label>
+      <div class="diff-text">{{ current_intent.keywords_regex }}</div>
+    </div>
+    <div class="form-row">
+      <label>Response</label>
+      <div class="diff-text">{{ current_intent.response_text }}</div>
+    </div>
+    {% else %}
+    <p style="color:#c92a2a">Intent "{{ proposal.payload.get('intent_name') or proposal.payload.get('to_remove') }}" no encontrado.</p>
+    {% endif %}
+  </div>
+  <div class="diff-panel proposed">
+    <h3>Propuesta del learner</h3>
+    {% if proposal.kind == 'update_intent' %}
+    <div class="form-row">
+      <label>Intent name</label>
+      <input class="form-control" value="{{ proposal.payload.get('intent_name', '?') }}" disabled>
+    </div>
+    <div class="form-row">
+      <label>Keywords (lista)</label>
+      <div class="diff-text">{{ proposal.payload.get('keywords', []) | join(' | ') }}</div>
+    </div>
+    <div class="form-row">
+      <label>Response propuesta</label>
+      <div class="diff-text">{{ proposal.payload.get('response', '?') }}</div>
+    </div>
+    {% else %}
+    <div class="form-row">
+      <label>A deprecar</label>
+      <input class="form-control" value="{{ proposal.payload.get('to_remove', '?') }}" disabled>
+    </div>
+    <p style="color:#92400e">Esta propuesta desactiva el intent (soft delete).</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if proposal.kind == 'create_intent' %}
+<div class="diff-panel proposed" style="max-width:600px">
+  <h3>Nuevo intent a crear</h3>
+  <div class="form-row">
+    <label>Intent name</label>
+    <input class="form-control" value="{{ proposal.payload.get('intent_name', '?') }}" disabled>
+  </div>
+  <div class="form-row">
+    <label>Keywords (regex que se generará)</label>
+    <div class="diff-text">{{ proposal.payload.get('keywords', []) | join(' | ') }}</div>
+  </div>
+  <div class="form-row">
+    <label>Response propuesta</label>
+    <div class="diff-text">{{ proposal.payload.get('response', '?') }}</div>
+  </div>
+</div>
+{% endif %}
+
+{% if proposal.status == 'pending' %}
+<form method="post" action="/admin/learner/{{ proposal.id }}/approve" style="margin-top:1.5rem">
+  <input type="hidden" name="tenant" value="{{ tenant }}">
+  <h3 style="margin-bottom:.5rem">Editar antes de aprobar (opcional)</h3>
+  <div class="diff-grid">
+    <div class="form-row">
+      <label>Intent name (dejar vacío para no cambiar)</label>
+      <input class="form-control" name="edited_intent_name"
+             value="{{ proposal.payload.get('intent_name', '') }}">
+    </div>
+    <div class="form-row">
+      <label>Keywords (CSV, vacío = no cambiar)</label>
+      <input class="form-control" name="edited_keywords"
+             value="{{ (proposal.payload.get('keywords', []) | join(', ')) if proposal.payload.get('keywords') else '' }}">
+    </div>
+  </div>
+  <div class="form-row">
+    <label>Response (vacío = no cambiar)</label>
+    <textarea class="form-control" name="edited_response" rows="4">{{ proposal.payload.get('response', '') }}</textarea>
+  </div>
+  <div style="display:flex;gap:.5rem;margin-top:1rem">
+    <button class="btn btn-primary" type="submit" onclick="return confirm('Aprobar y aplicar esta propuesta?')">
+      Aprobar y aplicar
+    </button>
+    <button class="btn btn-secondary" type="submit" formaction="/admin/learner/{{ proposal.id }}/reject"
+            onclick="return confirm('Rechazar esta propuesta?')">
+      Rechazar
+    </button>
+    <a class="btn btn-secondary" href="/admin/learner?tenant={{ tenant }}">Cancelar</a>
+  </div>
+</form>
+{% endif %}
+
+{% endblock %}
