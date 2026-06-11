@@ -1,6 +1,7 @@
 # Auto-Learner — Guía de operación
 
 > Change: `llm-first-con-auto-mejora`. Estado: implementado.
+> Change: `simulador-como-produccion-y-refactor-canales`. Estado: implementado.
 
 ## Resumen
 
@@ -145,6 +146,30 @@ cd multibot
 # Mandar un mensaje en el simulador y verificar que el LLM
 # genera la respuesta (matched_via="llm" en la métrica)
 ```
+
+## El simulador como clon de producción
+
+El simulador (`/admin/simulate/`) ejecuta ahora la misma
+`pipeline.process()` que usa el bot real, con la diferencia
+que `dry_run=True` impide que escriba en BD.
+
+**Ventajas:**
+- Lo que ves en el simulador = lo que recibe el cliente real.
+- Trace paso a paso: `resolve_tenant → anti_injection → classify → llm_decision → build_response`.
+- El step `llm_decision` muestra si el regex hizo bypass (con score y threshold) o si el LLM se invocó (con intent, confidence, reasoning).
+- No se persiste nada en la base de datos (no afecta conversaciones reales).
+
+**Uso:**
+1. Andá a `/admin/simulate/`.
+2. Elegí el canal (telegram, whatsapp, etc.) desde el dropdown.
+3. Mandá un mensaje de prueba.
+4. Verificá el trace: si dice `regex_bypass` con score > threshold, el LLM no se invocó (0 costo).
+5. Si dice `llm_invoked`, el LLM sí se usó — podés ver las métricas en `/admin/llm/usage`.
+
+**Integración con métricas LLM:**
+Cada vez que el LLM se invoca (tanto en producción como en el simulador cuando `dry_run=False` no aplica), se registra en `public.llm_usage`:
+- `tenant_id`, `provider_id`, `latency_ms`, `tokens_used`, `cost_usd`.
+- Las métricas se ven en `/admin/llm/usage` (últimos 30 días por provider).
 
 ## Troubleshooting
 

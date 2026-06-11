@@ -13,10 +13,12 @@ async def get_or_create_conversation(
     push_name: str | None,
     operation_mode: str,
     session: AsyncSession,
+    dry_run: bool = False,
 ) -> tuple[dict, bool]:
     """
     Return (conversation_row_dict, is_new).
     Uses raw SQL so it works with any tenant schema via search_path.
+    If dry_run=True, does NOT update last_message_at.
     """
     result = await session.execute(
         sa.text(
@@ -31,15 +33,16 @@ async def get_or_create_conversation(
     row = result.fetchone()
 
     if row:
-        # Update last_message_at
-        await session.execute(
-            sa.text(
-                "UPDATE conversations SET last_message_at = NOW() "
-                "WHERE tenant_id = :tid AND external_thread_id = :thread_id"
-            ),
-            {"tid": tenant_id, "thread_id": external_thread_id},
-        )
-        await session.commit()
+        # Update last_message_at (skip in dry_run)
+        if not dry_run:
+            await session.execute(
+                sa.text(
+                    "UPDATE conversations SET last_message_at = NOW() "
+                    "WHERE tenant_id = :tid AND external_thread_id = :thread_id"
+                ),
+                {"tid": tenant_id, "thread_id": external_thread_id},
+            )
+            await session.commit()
         return dict(row._mapping), False
 
     # Create new conversation

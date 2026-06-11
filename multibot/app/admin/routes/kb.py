@@ -47,7 +47,7 @@ async def kb_list(request: Request, tenant: str = "green-glamping", page: int = 
             await session.execute(sa.text(f'SET search_path TO "{schema}", public'))
             rows = (await session.execute(
                 sa.text(
-                    f"SELECT id, intent_name, priority, status, requires_human, "
+                    f"SELECT id, intent_name, priority, status, requires_human, source, "
                     f"LENGTH(response_text) AS resp_len "
                     f"FROM kb_intents {filters} "
                     f"ORDER BY priority DESC, intent_name "
@@ -225,69 +225,6 @@ async def _media_options(tenant: str) -> list[dict]:
             ]
         except Exception:
             return []
-
-
-@router.get("/{intent_id}", response_class=HTMLResponse)
-async def kb_edit(request: Request, intent_id: int, tenant: str = "green-glamping"):
-    tenant = effective_tenant(request, tenant)
-    schema = f"tenant_{tenant}"
-    async with async_session_factory() as session:
-        await session.execute(sa.text(f'SET search_path TO "{schema}", public'))
-        row = (await session.execute(
-            sa.text("SELECT * FROM kb_intents WHERE id = :id"), {"id": intent_id}
-        )).fetchone()
-
-    if not row:
-        return RedirectResponse(f"/admin/kb?tenant={tenant}", status_code=303)
-
-    return templates.TemplateResponse(request, "kb/edit.html", {
-        "intent": row._asdict(), "tenant": tenant,
-        "action": f"/admin/kb/{intent_id}?tenant={tenant}",
-    })
-
-
-@router.post("/{intent_id}", response_class=HTMLResponse)
-async def kb_update(
-    request: Request,
-    intent_id: int,
-    tenant: str = "green-glamping",
-    intent_name: str = Form(...),
-    keywords_regex: str = Form(...),
-    response_text: str = Form(...),
-    priority: int = Form(5),
-    requires_human: bool = Form(False),
-    handoff_rule: str = Form(""),
-    status: str = Form("active"),
-):
-    tenant = effective_tenant(request, tenant)
-    schema = f"tenant_{tenant}"
-    async with async_session_factory() as session:
-        try:
-            await session.execute(sa.text(f'SET search_path TO "{schema}", public'))
-            await session.execute(
-                sa.text(
-                    "UPDATE kb_intents SET "
-                    "intent_name=:name, keywords_regex=:regex, response_text=:resp, "
-                    "priority=:prio, requires_human=:rh, handoff_rule=:hr, status=:st "
-                    "WHERE id=:id"
-                ),
-                {
-                    "name": intent_name, "regex": keywords_regex, "resp": response_text,
-                    "prio": priority, "rh": requires_human, "hr": handoff_rule or None,
-                    "st": status, "id": intent_id,
-                },
-            )
-            await session.commit()
-        except Exception as e:
-            row = (await session.execute(
-                sa.text("SELECT * FROM kb_intents WHERE id = :id"), {"id": intent_id}
-            )).fetchone()
-            return templates.TemplateResponse(request, "kb/edit.html", {
-                "intent": row._asdict() if row else None, "tenant": tenant,
-                "error": str(e), "action": f"/admin/kb/{intent_id}?tenant={tenant}",
-            })
-
-    return RedirectResponse(f"/admin/kb?tenant={tenant}", status_code=303)
 
 
 @router.post("/{intent_id}/delete", response_class=HTMLResponse)

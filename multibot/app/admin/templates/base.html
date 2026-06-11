@@ -15,38 +15,9 @@
         </a>
         {% set role = request.session.get('role', 'client') %}
         <nav class="sidebar-nav">
-            <a href="/admin/" class="{{ 'active' if request.url.path == '/admin/' else '' }}">
-                <span class="nav-icon">📊</span> Dashboard
-            </a>
-            {% if role == 'superadmin' %}
-            <a href="/admin/wizard" class="{{ 'active' if request.url.path.startswith('/admin/wizard') else '' }}">
-                <span class="nav-icon">➕</span> Nuevo tenant
-            </a>
-            {% endif %}
-            <a href="/admin/kb" class="{{ 'active' if request.url.path.startswith('/admin/kb') else '' }}">
-                <span class="nav-icon">📚</span> Base de conocimiento
-            </a>
-            <a href="/admin/conversations" class="{{ 'active' if request.url.path.startswith('/admin/conversations') else '' }}">
-                <span class="nav-icon">💬</span> Conversaciones
-            </a>
-            <a href="/admin/reservations" class="{{ 'active' if request.url.path.startswith('/admin/reservations') else '' }}">
-                <span class="nav-icon">🏕</span> Reservas
-            </a>
-            <a href="/admin/metrics" class="{{ 'active' if request.url.path.startswith('/admin/metrics') else '' }}">
-                <span class="nav-icon">📈</span> Métricas
-            </a>
-            <a href="/admin/simulate" class="{{ 'active' if request.url.path.startswith('/admin/simulate') else '' }}">
-                <span class="nav-icon">🧪</span> Simulador
-            </a>
-            <a href="/admin/flow" class="{{ 'active' if request.url.path.startswith('/admin/flow') else '' }}">
-                <span class="nav-icon">🔀</span> Flujo del bot
-            </a>
-            {% if role == 'superadmin' %}
+            <div class="nav-section-label">COMUNICACIÓN</div>
             <a href="/admin/channels" class="{{ 'active' if request.url.path.startswith('/admin/channels') else '' }}">
                 <span class="nav-icon">📡</span> Canales
-            </a>
-            <a href="/admin/llm" class="{{ 'active' if request.url.path.startswith('/admin/llm') else '' }}">
-                <span class="nav-icon">🧩</span> IA / LLM
             </a>
             <a href="/admin/plans" class="{{ 'active' if request.url.path.startswith('/admin/plans') else '' }}">
                 <span class="nav-icon">🛎</span> Servicios
@@ -54,17 +25,49 @@
             <a href="/admin/media" class="{{ 'active' if request.url.path.startswith('/admin/media') else '' }}">
                 <span class="nav-icon">🖼</span> Media
             </a>
+
+            <div class="nav-section-label">OPERACIÓN</div>
+            <a href="/admin/" class="{{ 'active' if request.url.path == '/admin/' else '' }}">
+                <span class="nav-icon">📊</span> Dashboard
+            </a>
+            <a href="/admin/conversations" class="{{ 'active' if request.url.path.startswith('/admin/conversations') else '' }}">
+                <span class="nav-icon">💬</span> Conversaciones
+            </a>
             <a href="/admin/learner" class="{{ 'active' if request.url.path.startswith('/admin/learner') else '' }}">
                 <span class="nav-icon">📚</span> Learner
+            </a>
+            <a href="/admin/kb" class="{{ 'active' if request.url.path.startswith('/admin/kb') else '' }}">
+                <span class="nav-icon">📜</span> Historial KB
+            </a>
+            <a href="/admin/simulate" class="{{ 'active' if request.url.path.startswith('/admin/simulate') else '' }}">
+                <span class="nav-icon">🧪</span> Simulador
+            </a>
+
+            {% if role == 'superadmin' %}
+            <div class="nav-section-label">CONFIGURACIÓN</div>
+            <a href="/admin/llm" class="{{ 'active' if request.url.path.startswith('/admin/llm') else '' }}">
+                <span class="nav-icon">🧩</span> IA / LLMs
+            </a>
+            <a href="/admin/reservations" class="{{ 'active' if request.url.path.startswith('/admin/reservations') else '' }}">
+                <span class="nav-icon">🏕</span> Reservas
+            </a>
+            <a href="/admin/metrics" class="{{ 'active' if request.url.path.startswith('/admin/metrics') else '' }}">
+                <span class="nav-icon">📈</span> Métricas
+            </a>
+            <a href="/admin/flow" class="{{ 'active' if request.url.path.startswith('/admin/flow') else '' }}">
+                <span class="nav-icon">🔀</span> Flujo del bot
             </a>
             <a href="/admin/tts" class="{{ 'active' if request.url.path.startswith('/admin/tts') else '' }}">
                 <span class="nav-icon">🔊</span> TTS
             </a>
-            <a href="/admin/users" class="{{ 'active' if request.url.path.startswith('/admin/users') else '' }}">
-                <span class="nav-icon">👥</span> Usuarios
-            </a>
             <a href="/admin/status" class="{{ 'active' if request.url.path.startswith('/admin/status') else '' }}">
                 <span class="nav-icon">🩺</span> Estado
+            </a>
+            <a href="/admin/wizard" class="{{ 'active' if request.url.path.startswith('/admin/wizard') else '' }}">
+                <span class="nav-icon">➕</span> Nuevo tenant
+            </a>
+            <a href="/admin/users" class="{{ 'active' if request.url.path.startswith('/admin/users') else '' }}">
+                <span class="nav-icon">👥</span> Usuarios
             </a>
             <a href="/admin/settings" class="{{ 'active' if request.url.path.startswith('/admin/settings') else '' }}">
                 <span class="nav-icon">⚙️</span> Ajustes

@@ -85,6 +85,14 @@ body.with-sidebar {
     font-weight: 600;
 }
 .nav-icon { width: 1.4rem; text-align: center; }
+.nav-section-label {
+    font-size: .65rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.45);
+    padding: 1rem 1.25rem .3rem;
+}
 .sidebar-footer {
     padding: .9rem 1.25rem;
     border-top: 1px solid rgba(255,255,255,.15);

@@ -28,6 +28,7 @@
         <th>Intent</th>
         <th>Prioridad</th>
         <th>Estado</th>
+        <th>Fuente</th>
         <th>Handoff</th>
         <th>Resp.</th>
         <th>Acciones</th>
@@ -48,6 +49,17 @@
           <span class="badge badge-orange">handoff</span>
           {% else %}—{% endif %}
         </td>
+        <td>
+          {% if i.source == 'legacy' %}
+          <span class="badge badge-orange">legacy</span>
+          {% elif i.source == 'seed' %}
+          <span class="badge badge-blue">seed</span>
+          {% elif i.source == 'manual' %}
+          <span class="badge badge-gray">manual</span>
+          {% else %}
+          <span class="badge badge-gray">{{ i.source or '?' }}</span>
+          {% endif %}
+        </td>
         <td>{{ i.resp_len }} chars</td>
         <td>
           <a href="/admin/kb/{{ i.id }}?tenant={{ tenant }}" class="btn btn-secondary" style="padding:.3rem .7rem;font-size:.8rem">Editar</a>
@@ -58,7 +70,7 @@
         </td>
       </tr>
       {% else %}
-      <tr><td colspan="6" style="text-align:center;color:var(--color-text-muted)">Sin intents. <a href="/admin/kb/new?tenant={{ tenant }}">Crear el primero</a></td></tr>
+      <tr><td colspan="7" style="text-align:center;color:var(--color-text-muted)">Sin intents. <a href="/admin/kb/new?tenant={{ tenant }}">Crear el primero</a></td></tr>
       {% endfor %}
     </tbody>
   </table>

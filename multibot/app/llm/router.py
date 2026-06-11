@@ -8,6 +8,18 @@ from app.core.security import decrypt_credentials
 from app.llm.base import LLMProvider, LLMRequest, LLMResponse, STTRequest, STTResponse
 
 
+def _estimate_cost(tokens_used: int, model: str) -> float:
+    """Estimate USD cost based on token count and model."""
+    prices_per_1k = {
+        "mini-mini": 0.0001,
+        "gpt-4o-mini": 0.00015,
+        "gpt-4o": 0.003,
+        "gpt-4-turbo": 0.01,
+    }
+    per_1k = prices_per_1k.get(model.lower(), 0.0002)
+    return round(tokens_used * per_1k / 1000, 6)
+
+
 async def route_response_generation(
     system_prompt: str,
     user_prompt: str,
@@ -71,16 +83,42 @@ async def _load_providers(tenant_id: int, session: AsyncSession) -> list[LLMProv
 
 async def route_llm(request: LLMRequest, session: AsyncSession) -> LLMResponse:
     """Send an LLM request using the tenant's configured providers with failover."""
-    providers = await _load_providers(request.tenant_id, session)
-    if not providers:
+    from app.llm.usage_tracker import record_usage
+
+    rows = (await session.execute(
+        sa.text(
+            "SELECT id, provider_name, model, api_key, base_url, capabilities "
+            "FROM llm_providers "
+            "WHERE tenant_id = :tid AND is_active = true "
+            "ORDER BY priority DESC"
+        ),
+        {"tid": request.tenant_id},
+    )).fetchall()
+
+    if not rows:
         raise RuntimeError(f"No LLM providers configured for tenant {request.tenant_id}")
 
     last_err: Exception | None = None
-    for provider in providers:
+    for row in rows:
         try:
-            return await provider.complete(request)
+            creds = decrypt_credentials(row.api_key) if row.api_key else {}
+            api_key = creds.get("api_key", row.api_key or "")
+            caps = row.capabilities or {}
+            provider = _build_provider(row.provider_name, row.model, api_key, row.base_url or "", caps)
+            resp = await provider.complete(request)
+            await record_usage(
+                session=session,
+                tenant_id=request.tenant_id,
+                provider_id=row.id,
+                conversation_id=request.conversation_id,
+                latency_ms=resp.latency_ms,
+                tokens_used=resp.tokens_used,
+                cost_usd=_estimate_cost(resp.tokens_used, row.model),
+                bypassed=False,
+            )
+            return resp
         except Exception as e:
-            logger.warning(f"LLM provider {provider.provider_name} failed: {e}")
+            logger.warning(f"LLM provider {row.provider_name} failed: {e}")
             last_err = e
 
     raise RuntimeError(f"All LLM providers failed: {last_err}")

@@ -220,7 +220,7 @@ async def _ensure_schema_has_tables(session, schema: str) -> None:
 
 
 async def _ensure_kb_intent_columns(session, schema: str) -> None:
-    """Agrega columnas de migraciones 003/004 a kb_intents si faltan."""
+    """Agrega columnas de migraciones 003/004/005 a kb_intents si faltan."""
     # Migración 003
     await session.execute(sa.text(
         f'ALTER TABLE "{schema}".kb_intents ADD COLUMN IF NOT EXISTS '
@@ -238,6 +238,11 @@ async def _ensure_kb_intent_columns(session, schema: str) -> None:
     await session.execute(sa.text(
         f'ALTER TABLE "{schema}".kb_intents ADD COLUMN IF NOT EXISTS '
         f'response_media_ids JSONB NOT NULL DEFAULT \'[]\'::jsonb'
+    ))
+    # Fuente para distinguir seed/legacy/manual
+    await session.execute(sa.text(
+        f'ALTER TABLE "{schema}".kb_intents ADD COLUMN IF NOT EXISTS '
+        f'source VARCHAR(20) NOT NULL DEFAULT \'seed\''
     ))
 
 
@@ -420,6 +425,40 @@ async def link_services_to_media(session, schema: str) -> int:
     return updated
 
 
+async def rescan_legacy(session, schema: str) -> int:
+    """
+    Revisa todos los kb_intents y marca como 'legacy' los que tienen
+    datos hardcodeados de precios o servicios en response_text.
+    """
+    import re
+    price_pattern = re.compile(r"\$\d+[\.,]?\d*")
+    combo_patterns = [
+        re.compile(r"combo\s+\d+", re.IGNORECASE),
+        re.compile(r"glamping\s*\*", re.IGNORECASE),
+        re.compile(r"parapente.*\d{3,}", re.IGNORECASE),
+    ]
+
+    updated = 0
+    rows = (await session.execute(
+        sa.text(f'SELECT id, intent_name, response_text FROM "{schema}".kb_intents')
+    )).fetchall()
+    for row in rows:
+        text = row.response_text or ""
+        is_legacy = bool(price_pattern.search(text))
+        if not is_legacy:
+            for pat in combo_patterns:
+                if pat.search(text):
+                    is_legacy = True
+                    break
+        if is_legacy:
+            await session.execute(
+                sa.text(f'UPDATE "{schema}".kb_intents SET source=\'legacy\' WHERE id=:id'),
+                {"id": row.id},
+            )
+            updated += 1
+    return updated
+
+
 async def set_precio_general_template(session, schema: str) -> int:
     """
     Migra el intent `precio_general` a template Jinja que itera
@@ -525,7 +564,7 @@ async def seed_handoff_rules(session, schema: str, seed_data: dict, tenant_id: i
     return inserted
 
 
-async def seed(clean: bool = False):
+async def seed(clean: bool = False, rescan_legacy: bool = False):
     settings = get_settings()
     engine = create_async_engine(settings.get_database_url(), echo=False)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
@@ -583,11 +622,16 @@ async def seed(clean: bool = False):
         linked = await link_services_to_media(session, schema)
         precio_migrated = await set_precio_general_template(session, schema)
 
+        legacy_count = 0
+        if rescan_legacy:
+            legacy_count = await rescan_legacy(session, schema)
+
         await session.commit()
         print(
             f"✓ Sembrado: {intents} intents, {handoffs} handoff rules, "
             f"{services} servicios, {media} media, {linked} servicios con imagen vinculada, "
             f"{precio_migrated} intent migrado a template"
+            + (f", {legacy_count} marked as legacy" if rescan_legacy else "")
         )
 
     await engine.dispose()
@@ -600,5 +644,9 @@ if __name__ == "__main__":
         "--clean", action="store_true",
         help="Borra servicios/media de prueba antes de sembrar (reset completo).",
     )
+    parser.add_argument(
+        "--rescan-legacy", action="store_true",
+        help="Después de sembrar, detecta intents con precios hardcodeados y los marca como legacy.",
+    )
     args = parser.parse_args()
-    asyncio.run(seed(clean=args.clean))
+    asyncio.run(seed(clean=args.clean, rescan_legacy=args.rescan_legacy))

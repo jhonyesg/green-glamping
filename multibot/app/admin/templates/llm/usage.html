@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Uso de LLM{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Uso de LLM</h1>
+  <p class="subtitle">Métricas de uso por provider — últimos 30 días</p>
+</div>
+
+<form method="get" style="margin-bottom:1.5rem; display:flex; gap:.5rem; align-items:center">
+  <label>Tenant:</label>
+  <select name="tenant" onchange="this.form.submit()" class="form-control" style="width:auto">
+    {% for t in tenants %}
+    <option value="{{ t.slug }}" {% if t.slug == tenant %}selected{% endif %}>{{ t.name or t.slug }}</option>
+    {% endfor %}
+  </select>
+</form>
+
+{% if usage_by_provider %}
+<table class="table" style="width:100%; border-collapse:collapse">
+  <thead>
+    <tr style="background:#f5f5f5">
+      <th style="padding:.5rem .75rem; text-align:left">Provider</th>
+      <th style="padding:.5rem .75rem; text-align:left">Modelo</th>
+      <th style="padding:.5rem .75rem; text-align:right">Llamadas</th>
+      <th style="padding:.5rem .75rem; text-align:right">Tokens</th>
+      <th style="padding:.5rem .75rem; text-align:right">Costo (USD)</th>
+      <th style="padding:.5rem .75rem; text-align:right">p50 latency</th>
+      <th style="padding:.5rem .75rem; text-align:right">p95 latency</th>
+      <th style="padding:.5rem .75rem; text-align:right">Bypass</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in usage_by_provider %}
+    <tr style="border-bottom:1px solid #eee">
+      <td style="padding:.5rem .75rem"><strong>{{ row.provider_name }}</strong></td>
+      <td style="padding:.5rem .75rem; color:#666">{{ row.model }}</td>
+      <td style="padding:.5rem .75rem; text-align:right">{{ row.total_calls }}</td>
+      <td style="padding:.5rem .75rem; text-align:right">{{ row.total_tokens | default(0) | int | default(0) }}</td>
+      <td style="padding:.5rem .75rem; text-align:right">${{ "%.6f"|format(row.total_cost or 0) }}</td>
+      <td style="padding:.5rem .75rem; text-align:right">{{ row.p50_latency_ms or 0 }}ms</td>
+      <td style="padding:.5rem .75rem; text-align:right">{{ row.p95_latency_ms or 0 }}ms</td>
+      <td style="padding:.5rem .75rem; text-align:right">{{ row.bypass_count or 0 }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="card" style="padding:2rem; text-align:center; color:#888">
+  Sin datos de uso en los últimos 30 días.
+  Las métricas se registran automáticamente cuando el bot usa el LLM.
+</div>
+{% endif %}
+
+{% endblock %}

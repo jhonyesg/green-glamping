@@ -288,3 +288,56 @@ async def llm_strategy_save(
     return RedirectResponse(
         f"/admin/llm/strategy?tenant={tenant}&saved=ok", status_code=303
     )
+
+
+@router.get("/usage", response_class=HTMLResponse)
+async def llm_usage(request: Request, tenant: str = "green-glamping"):
+    """Show LLM usage metrics per provider (last 30 days)."""
+    tenants = []
+    usage_by_provider: list[dict] = []
+    async with async_session_factory() as session:
+        tenants = (await session.execute(sa.text(
+            "SELECT slug, name FROM public.tenants WHERE status='active' ORDER BY slug"
+        ))).fetchall()
+        tenant_row = (await session.execute(
+            sa.text("SELECT id FROM public.tenants WHERE slug=:s"), {"s": tenant}
+        )).fetchone()
+        if tenant_row:
+            await session.execute(sa.text('SET search_path TO "public"'))
+            rows = (await session.execute(
+                sa.text(
+                    """
+                    SELECT
+                        p.id         AS provider_id,
+                        p.provider_name,
+                        p.model,
+                        COUNT(u.id)  AS total_calls,
+                        COALESCE(SUM(u.tokens_used), 0)  AS total_tokens,
+                        COALESCE(SUM(u.cost_usd), 0)      AS total_cost,
+                        COALESCE(AVG(u.latency_ms), 0)::int  AS avg_latency_ms,
+                        COALESCE(
+                            PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY u.latency_ms), 0
+                        )::int  AS p50_latency_ms,
+                        COALESCE(
+                            PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY u.latency_ms), 0
+                        )::int  AS p95_latency_ms,
+                        COUNT(CASE WHEN NOT u.bypassed THEN 1 END)  AS successful_calls,
+                        COUNT(CASE WHEN u.bypassed     THEN 1 END)  AS bypass_count
+                    FROM llm_providers p
+                    LEFT JOIN llm_usage u
+                        ON u.provider_id = p.id
+                        AND u.created_at >= NOW() - INTERVAL '30 days'
+                    WHERE p.tenant_id = :tid
+                    GROUP BY p.id, p.provider_name, p.model
+                    ORDER BY p.priority DESC, p.id
+                    """
+                ),
+                {"tid": tenant_row.id},
+            )).fetchall()
+            usage_by_provider = [dict(r._mapping) for r in rows]
+
+    return templates.TemplateResponse(request, "llm/usage.html", {
+        "tenant": tenant,
+        "tenants": tenants,
+        "usage_by_provider": usage_by_provider,
+    })

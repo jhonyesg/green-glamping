@@ -27,6 +27,9 @@ class PipelineResult:
     in_handoff_silence: bool = False
     conversation_id: int | None = None
     is_new_conversation: bool = False
+    # Trace paso a paso de la pipeline (para simulador y debug).
+    # Cada step es un dict con: name, ok, detail, ms.
+    trace: list[dict] | None = None
 
 
 INJECTION_BLOCK_RESPONSE = (
@@ -49,13 +52,24 @@ async def process(
     push_name: str | None = None,
     operation_mode: str = "autonomous",
     config: dict | None = None,
+    dry_run: bool = False,
 ) -> PipelineResult:
+    """
+    Pipeline completa. Si `dry_run=True`, NO persiste en BD ni
+    dispara handoff (usado por el simulador).
+    """
     start = time.monotonic()
     cfg = config or {}
+    trace: list[dict] = []
+
+    def add_trace(name: str, ok: bool, detail: str | dict = "", ms: int = 0):
+        trace.append({"step": name, "ok": ok, "detail": detail, "ms": ms})
 
     # 1. Anti-injection gate (configurable per tenant)
+    t0 = time.monotonic()
     if cfg.get("anti_injection_enabled", True) and check_injection(text):
         elapsed = int((time.monotonic() - start) * 1000)
+        add_trace("anti_injection", False, "BLOCKED", elapsed)
         return PipelineResult(
             outbound=OutboundMessage(
                 text=cfg.get("injection_response") or INJECTION_BLOCK_RESPONSE,
@@ -64,7 +78,9 @@ async def process(
             ),
             latency_ms=elapsed,
             blocked_injection=True,
+            trace=trace,
         )
+    add_trace("anti_injection", True, "clean", int((time.monotonic() - t0) * 1000))
 
     # 2. Get/create conversation
     conversation, is_new = await get_or_create_conversation(
@@ -74,13 +90,16 @@ async def process(
         push_name=push_name,
         operation_mode=operation_mode,
         session=session,
+        dry_run=dry_run,
     )
     conv_id = conversation["id"]
+    add_trace("resolve_tenant", True, f"tenant_id={tenant_id}, conv_id={conv_id}", int((time.monotonic() - start) * 1000))
 
     # 3. Check handoff silence
     if is_in_handoff_pause(conversation):
         # Log user message but don't respond
-        await persist_message(conv_id, "user", text, session, matched_via="fallback")
+        if not dry_run:
+            await persist_message(conv_id, "user", text, session, matched_via="fallback")
         elapsed = int((time.monotonic() - start) * 1000)
         return PipelineResult(
             outbound=OutboundMessage(
@@ -91,11 +110,13 @@ async def process(
             latency_ms=elapsed,
             in_handoff_silence=True,
             conversation_id=conv_id,
+            trace=trace,
         )
 
     # 4. If long pause has elapsed → resume bot
     if should_resume(conversation, long_pause_hours=cfg.get("long_pause_hours")):
-        await resume_conversation(conversation, session)
+        if not dry_run:
+            await resume_conversation(conversation, session)
         conversation["in_handoff"] = False
 
     # 5. Get recent context (configurable: enabled + window size)
@@ -107,21 +128,33 @@ async def process(
         recent_turns = []
 
     # 6. Classify
+    t0 = time.monotonic()
     classification = await classify(text, tenant_id, session)
-
-    # 6b. Custom fallback response from tenant config
     if classification.matched_via == "fallback" and cfg.get("fallback_response"):
         classification.response_text = cfg["fallback_response"]
+    add_trace("classify", True, {
+        "intent": classification.intent_name,
+        "score": round(classification.score, 3),
+        "matched_via": classification.matched_via,
+        "is_ambiguous": classification.is_ambiguous,
+    }, int((time.monotonic() - t0) * 1000))
 
     # 7. Persist user message
-    await persist_message(
-        conv_id, "user", text, session,
-        intent_id=classification.intent_id,
-        matched_via=classification.matched_via,
-    )
+    if not dry_run:
+        await persist_message(
+            conv_id, "user", text, session,
+            intent_id=classification.intent_id,
+            matched_via=classification.matched_via,
+        )
 
     # 8. Build response
+    t0 = time.monotonic()
     outbound = build_response(classification)
+    add_trace("build_response", True, {
+        "text_preview": (outbound.text or "")[:200],
+        "requires_human": outbound.requires_human,
+        "handoff_rule": outbound.handoff_rule,
+    }, int((time.monotonic() - t0) * 1000))
 
     # 8a. LLM-first: si el modo está activo y el regex no es bypass,
     #     invocar al LLM con el contexto completo. Si el regex
@@ -135,8 +168,24 @@ async def process(
         recent_turns=recent_turns,
         regex_classification=classification,
     )
+    t_llm = time.monotonic()
     if llm_response is not None:
+        add_trace("llm_decision", True, {
+            "decision": "llm_invoked",
+            "intent": llm_response.intent,
+            "confidence": getattr(llm_response, "confidence", None),
+            "reasoning": getattr(llm_response, "reasoning", None),
+            "provider": cfg.get("_llm_provider_used", "unknown"),
+        }, int((t_llm - t0) * 1000))
         outbound.text = llm_response.response
+    else:
+        threshold = float(cfg.get("llm_strategy", {}).get("bypass_threshold", 0.9))
+        add_trace("llm_decision", True, {
+            "decision": "regex_bypass" if classification.matched_via == "regex" else "no_llm",
+            "score": round(classification.score, 3),
+            "threshold": threshold,
+            "matched_via": classification.matched_via,
+        }, int((t_llm - t0) * 1000))
         # Si el LLM detectó un intent de la KB existente, tomar su
         # handoff_rule y media adjuntos. Si no, mantener los del
         # regex match.
@@ -209,57 +258,71 @@ async def process(
             logger.warning(f"template_lookup_failed intent_id={classification.intent_id} error={e}")
 
     if intent_dict["response_type"] != "static" and intent_dict.get("response_template"):
+        t0 = time.monotonic()
         ctx = await _build_render_context(tenant_id, session, recent_turns, channel="telegram")
         rendered, fell_back = render_response(intent_dict, ctx)
+        add_trace("render_template", not fell_back, {
+            "intent": classification.intent_name,
+            "type": intent_dict["response_type"],
+            "fell_back": fell_back,
+        }, int((time.monotonic() - t0) * 1000))
         if not fell_back:
             outbound.text = rendered
 
     # 9. Handle handoff trigger
+    t0 = time.monotonic()
     if classification.handoff_rule and classification.requires_human:
-        await trigger_handoff(
-            conversation, classification.handoff_rule, classification.intent_name, session,
-            pause_hours=cfg.get("short_pause_hours"),
-        )
-        # Look up notify_target from handoff_rules table
-        rule_row = (await session.execute(
-            sa.text(
-                "SELECT notify_channel, notify_target, custom_message "
-                "FROM handoff_rules "
-                "WHERE tenant_id = :tid AND rule_code = :code AND is_active = true "
-                "LIMIT 1"
-            ),
-            {"tid": tenant_id, "code": classification.handoff_rule},
-        )).fetchone()
-
-        if rule_row:
-            from app.config import get_settings
-            from app.notifications.human_notify import notify_human
-            settings = get_settings()
-            await notify_human(
-                conversation=conversation,
-                rule_code=classification.handoff_rule,
-                user_message=text,
-                recent_turns=recent_turns,
-                notify_channel=rule_row.notify_channel,
-                notify_target=rule_row.notify_target or "",
-                bot_token=settings.TELEGRAM_BOT_TOKEN,
+        if dry_run:
+            add_trace("handoff", True, f"would trigger {classification.handoff_rule} (dry_run)", 0)
+            logger.info(f"[dry_run] would trigger handoff: rule={classification.handoff_rule} intent={classification.intent_name}")
+        else:
+            await trigger_handoff(
+                conversation, classification.handoff_rule, classification.intent_name, session,
+                pause_hours=cfg.get("short_pause_hours"),
             )
+            add_trace("handoff", True, f"triggered {classification.handoff_rule}", int((time.monotonic() - t0) * 1000))
+            # Look up notify_target from handoff_rules table
+            rule_row = (await session.execute(
+                sa.text(
+                    "SELECT notify_channel, notify_target, custom_message "
+                    "FROM handoff_rules "
+                    "WHERE tenant_id = :tid AND rule_code = :code AND is_active = true "
+                    "LIMIT 1"
+                ),
+                {"tid": tenant_id, "code": classification.handoff_rule},
+            )).fetchone()
+
+            if rule_row:
+                from app.config import get_settings
+                from app.notifications.human_notify import notify_human
+                settings = get_settings()
+                await notify_human(
+                    conversation=conversation,
+                    rule_code=classification.handoff_rule,
+                    user_message=text,
+                    recent_turns=recent_turns,
+                    notify_channel=rule_row.notify_channel,
+                    notify_target=rule_row.notify_target or "",
+                    bot_token=settings.TELEGRAM_BOT_TOKEN,
+                )
 
     elapsed = int((time.monotonic() - start) * 1000)
 
     # 10. Persist bot message
-    await persist_message(
-        conv_id, "bot", outbound.text, session,
-        intent_id=classification.intent_id,
-        matched_via=classification.matched_via,
-        latency_ms=elapsed,
-    )
+    if not dry_run:
+        await persist_message(
+            conv_id, "bot", outbound.text, session,
+            intent_id=classification.intent_id,
+            matched_via=classification.matched_via,
+            latency_ms=elapsed,
+        )
 
     return PipelineResult(
         outbound=outbound,
         latency_ms=elapsed,
         conversation_id=conv_id,
         is_new_conversation=is_new,
+        trace=trace,
     )
 
 

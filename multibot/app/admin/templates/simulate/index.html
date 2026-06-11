@@ -23,6 +23,14 @@
         <textarea class="form-control" name="message" rows="4" placeholder="Hola, quiero saber los precios..."></textarea>
       </div>
       <div class="form-group">
+        <label>Canal</label>
+        <select class="form-control" name="channel">
+          {% for value, label in channel_options %}
+          <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
         <label>Intent esperado (para exportar test)</label>
         <input class="form-control" name="expected_intent" placeholder="saludo_puro">
       </div>
@@ -99,10 +107,12 @@ function renderResult(data) {
   const summary = document.getElementById('result-summary');
   if (!data.blocked) {
     summary.innerHTML = `
-      <p><strong>Respuesta:</strong></p>
+      <p><strong>Respuesta completa:</strong></p>
       <blockquote style="border-left:3px solid var(--color-primary);padding-left:.75rem;margin:.5rem 0;font-style:italic">
-        ${escHtml(data.response_preview)}
+        ${escHtml(data.response_text || data.response_preview)}
       </blockquote>
+      ${(data.media_attachments && data.media_attachments.length > 0) ? '<p><strong>Media:</strong> ' + data.media_attachments.length + ' adjunto(s)</p>' : ''}
+      ${data.handoff_rule ? '<p><span class="badge badge-orange">handoff: ' + escHtml(data.handoff_rule) + '</span></p>' : ''}
       <p style="color:var(--color-text-muted);font-size:.8rem">LLM calls: ${data.llm_calls} · Total: ${data.total_ms}ms</p>
     `;
   }
