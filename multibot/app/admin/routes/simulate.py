@@ -67,6 +67,7 @@ async def simulate(
             operation_mode=tenant_row.operation_mode or "autonomous",
             config=cfg,
             dry_run=True,
+            _channel_override=channel,
         )
 
     total_ms = round((time.monotonic() - start) * 1000)

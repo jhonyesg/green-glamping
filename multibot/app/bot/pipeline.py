@@ -53,6 +53,8 @@ async def process(
     operation_mode: str = "autonomous",
     config: dict | None = None,
     dry_run: bool = False,
+    channel: str = "simulator",
+    _channel_override: str | None = None,
 ) -> PipelineResult:
     """
     Pipeline completa. Si `dry_run=True`, NO persiste en BD ni
@@ -61,6 +63,7 @@ async def process(
     start = time.monotonic()
     cfg = config or {}
     trace: list[dict] = []
+    chat_channel = _channel_override or channel
 
     def add_trace(name: str, ok: bool, detail: str | dict = "", ms: int = 0):
         trace.append({"step": name, "ok": ok, "detail": detail, "ms": ms})
@@ -259,7 +262,7 @@ async def process(
 
     if intent_dict["response_type"] != "static" and intent_dict.get("response_template"):
         t0 = time.monotonic()
-        ctx = await _build_render_context(tenant_id, session, recent_turns, channel="telegram")
+        ctx = await _build_render_context(tenant_id, session, recent_turns, channel=chat_channel)
         rendered, fell_back = render_response(intent_dict, ctx)
         add_trace("render_template", not fell_back, {
             "intent": classification.intent_name,
